@@ -49,8 +49,9 @@ bond angles, atom coordinates, and shell/orbital counts. Charge appears as
 blue/red halos around charged atoms, and ionic edges draw a blue-to-red gradient
 between charged atoms. Ordinary covalent edges are dark grey one/two/three/four
 line sets for single/double/triple/quadruple bonds; pi, bridge, coordination,
-and other non-standard systems use a separate coloured overlay. It can also load
-the shared MolADT JSON files by drag and drop.
+and other non-standard systems use a separate coloured overlay. Ordinary
+covalent systems are not repeated as page labels. It can also load the shared
+MolADT JSON files by drag and drop.
 
 ```bash
 make view

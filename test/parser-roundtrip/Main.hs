@@ -434,6 +434,7 @@ spec = do
       html `shouldContain` "drawChargeField"
       html `shouldContain` "drawBondLines"
       html `shouldContain` "chargeGradientForEdge"
+      html `shouldContain` "displaySystems"
       html `shouldNotContain` "setLineDash"
 
     it "uses grey covalent systems and colored non-standard bonding systems" $ do

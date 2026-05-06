@@ -353,6 +353,9 @@ h1 { margin: 0; font-size: 24px; line-height: 1.08; letter-spacing: 0; }
   function isStandardCovalentSystem(system) {
     return !!standardCovalentLineCount(system);
   }
+  function displaySystems(systems) {
+    return (systems || []).filter(function (system) { return !isStandardCovalentSystem(system); });
+  }
   function standardCovalentLineCount(system) {
     if (!system) return 0;
     const key = standardSystemKey(system.tag || null, Number(system.sharedElectrons || 0), system.edges || []);
@@ -693,13 +696,14 @@ h1 { margin: 0; font-size: 24px; line-height: 1.08; letter-spacing: 0; }
     titleNode.textContent = payload.title || 'MolADT viewer';
     countsNode.textContent = `${payload.atoms.length} atoms, ${payload.bonds.length} edges, ${payload.systems.length} bonding systems`;
     systemList.innerHTML = '';
-    if (!payload.systems.length) {
+    const visibleSystems = displaySystems(payload.systems);
+    if (!visibleSystems.length) {
       const empty = document.createElement('div');
       empty.className = 'counts';
       empty.textContent = 'No explicit bonding systems';
       systemList.appendChild(empty);
     } else {
-      payload.systems.forEach(function (system) {
+      visibleSystems.forEach(function (system) {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'system-button';
