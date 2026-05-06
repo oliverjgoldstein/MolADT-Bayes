@@ -8,6 +8,7 @@ import Test.Hspec
 import Chem.IO.MoleculeViewer
   ( moleculeViewerCollectionHTML
   , moleculeViewerHTML
+  , moleculeViewerPayload
   , moleculeViewerURI
   , writeMoleculeViewerHTML
   )
@@ -18,7 +19,11 @@ import Chem.Molecule
 import Chem.Dietz
 import Chem.Validate (validateMolecule)
 import ExampleMolecules.Diborane (diboranePretty)
+import ExampleMolecules.Benzene (benzenePretty)
 import ExampleMolecules.Morphine (morphinePretty, morphineRingClosureSmiles)
+import qualified Data.Aeson as A
+import qualified Data.ByteString.Lazy.Char8 as BL8
+import Data.List (isInfixOf)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import System.Directory (doesFileExist, getTemporaryDirectory, removeDirectoryRecursive, removeFile)
@@ -427,8 +432,26 @@ spec = do
       html `shouldContain` "positiveChargeColor"
       html `shouldContain` "negativeChargeColor"
       html `shouldContain` "drawChargeField"
-      html `shouldNotContain` "chargeGradientForEdge"
+      html `shouldContain` "drawBondLines"
+      html `shouldContain` "chargeGradientForEdge"
       html `shouldNotContain` "setLineDash"
+
+    it "uses grey covalent systems and colored non-standard bonding systems" $ do
+      let payloadText title molecule = BL8.unpack (A.encode (moleculeViewerPayload title molecule))
+          parsedPayload title smilesText =
+            case parseSMILES smilesText of
+              Left err -> expectationFailure err >> pure ""
+              Right molecule -> pure (payloadText title molecule)
+          extraColors = ["#0891b2", "#db2777", "#ca8a04", "#475569", "#0d9488", "#4f46e5", "#a16207", "#be185d"]
+      ethene <- parsedPayload "Ethene" "C=C"
+      hydrogenCyanide <- parsedPayload "Hydrogen cyanide" "C#N"
+      quadruple <- parsedPayload "Quadruple" "C$C"
+      ionic <- parsedPayload "Sodium chloride" "[Na+][Cl-]"
+      ethene `shouldContain` "#374151"
+      hydrogenCyanide `shouldContain` "#374151"
+      quadruple `shouldContain` "#374151"
+      ionic `shouldContain` "#0f766e"
+      payloadText "Benzene" benzenePretty `shouldSatisfy` \text -> any (`isInfixOf` text) extraColors
 
     it "renders a collection viewer for multiple built-in molecules" $ do
       let html = moleculeViewerCollectionHTML "Example viewer" [("Diborane", diboranePretty), ("Morphine", morphinePretty)]

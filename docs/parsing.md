@@ -110,9 +110,11 @@ main = do
 The viewer panel lists explicit bonding systems, including the one-edge systems
 for ordinary bonds, so molecules like diborane and ferrocene are inspectable as
 ADTs rather than flattened bond tables. Charge is shown as blue/red halos around
-charged atoms rather than as colour on the ionic edge itself. The CLI prints a
-portable `file://` URL for the written viewer, so the same output works as a
-manual fallback if OS auto-open fails.
+charged atoms, and ionic edges draw a blue-to-red gradient between charged
+atoms. The CLI prints a portable `file://` URL for the written viewer, so the
+same output works as a manual fallback if OS auto-open fails. Ordinary covalent
+edges are dark grey single/double/triple/quadruple line sets; non-standard
+systems use a separate coloured overlay.
 
 ## SMILES To MolADT
 
