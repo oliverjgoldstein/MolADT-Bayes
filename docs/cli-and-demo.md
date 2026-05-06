@@ -45,9 +45,9 @@ stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water
 
 The viewer is a single HTML file with the MolADT payload embedded. It shows
 atoms, derived edges, explicit bonding systems, axes, 3D edge lengths, stored
-bond angles, atom coordinates, and shell/orbital counts. Ionic edges render as
-blue-to-red charge gradients from positive to negative atoms. It can also load
-the shared MolADT JSON files by drag and drop.
+bond angles, atom coordinates, and shell/orbital counts. Charge appears as
+blue/red halos around charged atoms, while covalent and ionic edge lines stay
+solid. It can also load the shared MolADT JSON files by drag and drop.
 
 ```bash
 make view
@@ -57,7 +57,8 @@ make molecule-viewer
 ```
 
 Use `OPEN_VIEWER=1` if you want the Make target to ask the operating system to
-open the generated file.
+open the generated file. Viewer commands print a portable `file://` URL, and if
+the OS auto-open request fails they report that URL as the manual fallback.
 
 ## Verbose Benchmark Output
 

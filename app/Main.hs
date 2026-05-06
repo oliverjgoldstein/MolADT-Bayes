@@ -10,7 +10,8 @@ import           BenchmarkModel
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import           Chem.IO.MoleculeViewer
-  ( openMoleculeViewer
+  ( moleculeViewerURI
+  , openMoleculeViewer
   , writeMoleculeViewerCollectionHTML
   , writeMoleculeViewerHTML
   )
@@ -258,12 +259,14 @@ writeViewerAndMaybeOpen outputPath title molecule shouldOpen = do
       ++ show (length (systems molecule))
       ++ " bonding systems."
   putStrLn ("Viewer HTML: " ++ written)
+  uri <- moleculeViewerURI written
+  putStrLn ("Viewer URL: " ++ uri)
   if shouldOpen
     then do
       opened <- openMoleculeViewer written
       if opened
-        then putStrLn "Viewer opened."
-        else putStrLn "Viewer open request failed; open the HTML file in a browser."
+        then putStrLn ("Viewer opened: " ++ uri)
+        else putStrLn ("Viewer open request failed; open this URL manually: " ++ uri)
     else pure ()
 
 writeViewerCollectionAndMaybeOpen :: FilePath -> String -> [(String, Molecule)] -> Bool -> IO ()
@@ -274,12 +277,14 @@ writeViewerCollectionAndMaybeOpen outputPath title molecules shouldOpen = do
       ++ show (length molecules)
       ++ " examples."
   putStrLn ("Viewer HTML: " ++ written)
+  uri <- moleculeViewerURI written
+  putStrLn ("Viewer URL: " ++ uri)
   if shouldOpen
     then do
       opened <- openMoleculeViewer written
       if opened
-        then putStrLn "Viewer opened."
-        else putStrLn "Viewer open request failed; open the HTML file in a browser."
+        then putStrLn ("Viewer opened: " ++ uri)
+        else putStrLn ("Viewer open request failed; open this URL manually: " ++ uri)
     else pure ()
 
 renderValidated :: Molecule -> IO ()

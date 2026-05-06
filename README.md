@@ -94,8 +94,8 @@ around the molecule without hiding the molecule fields.
 - **Editable structure**: inverse-design experiments can operate on atoms,
   hydrogens, and bonding systems as typed concepts.
 - **Inspectable outputs**: the standalone viewer shows atoms, every edge, and
-  explicit electron-sharing systems from the same typed payload. Ionic edges
-  render as blue-to-red charge gradients from positive to negative atoms.
+  explicit electron-sharing systems from the same typed payload. Charge renders
+  as blue/red halos around charged atoms rather than colouring ionic edge lines.
 - **Algebraic contracts**: rotations, atom relabelings, or other transforms can
   be expressed with type classes as groups acting on molecules, giving
   geometric models a clear place to state invariance and equivariance.
@@ -165,6 +165,10 @@ make haskell-viewer
 make haskell-demo
 make haskell-infer-benchmark
 ```
+
+Viewer commands print both the HTML path and a portable `file://` URL. With
+`--open-viewer` or `OPEN_VIEWER=1`, the same URL is printed as the manual
+fallback if the operating system does not open a browser automatically.
 
 The Haskell benchmark path is intentionally narrow: it consumes the Python
 `freesolv_moladt_featurized` export and runs a local exact RBF Gaussian process

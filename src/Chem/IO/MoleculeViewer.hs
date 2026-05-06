@@ -7,17 +7,22 @@ module Chem.IO.MoleculeViewer
   , moleculeViewerCollectionHTML
   , writeMoleculeViewerHTML
   , writeMoleculeViewerCollectionHTML
+  , moleculeViewerURI
   , openMoleculeViewer
   ) where
 
 import           Control.Exception (SomeException, try)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy.Char8 as BL8
+import           Data.Char (isAlphaNum, isAscii, toUpper)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import qualified Data.Text as T
-import           System.Directory (createDirectoryIfMissing)
+import qualified Data.Text.Encoding as TE
+import           Numeric (showHex)
+import           System.Directory (createDirectoryIfMissing, makeAbsolute)
 import           System.FilePath (takeDirectory)
 import           System.Info (os)
 import           System.Process (callProcess)
@@ -615,10 +620,12 @@ viewerHTML title payloadValue =
     , "    if (Number(charge) < 0) return negativeChargeColor;"
     , "    return '#8a95a3';"
     , "  }"
-    , "  function chargeGradientForEdge(atomMap, edge) {"
-    , "    const atomA = atomMap.get(Number(edge.a));"
-    , "    const atomB = atomMap.get(Number(edge.b));"
-    , "    return { colorA: chargeColor(atomA ? atomA.charge : 0), colorB: chargeColor(atomB ? atomB.charge : 0) };"
+    , "  function hexToRgba(hex, alpha) {"
+    , "    const clean = String(hex || '#000000').replace('#', '').padEnd(6, '0').slice(0, 6);"
+    , "    const r = parseInt(clean.slice(0, 2), 16);"
+    , "    const g = parseInt(clean.slice(2, 4), 16);"
+    , "    const b = parseInt(clean.slice(4, 6), 16);"
+    , "    return `rgba(${r}, ${g}, ${b}, ${alpha})`;"
     , "  }"
     , "  function normalisePayload(raw) {"
     , "    if (raw && raw.format === 'moladt-viewer-v1') return raw;"
@@ -724,11 +731,33 @@ viewerHTML title payloadValue =
     , "    gradient.addColorStop(0, options.colorA || color);"
     , "    gradient.addColorStop(1, options.colorB || color);"
     , "    ctx.strokeStyle = gradient;"
-    , "    if (options.dashed) ctx.setLineDash([7, 8]);"
     , "    ctx.beginPath();"
     , "    ctx.moveTo(a.x + ox, a.y + oy);"
     , "    ctx.lineTo(b.x + ox, b.y + oy);"
     , "    ctx.stroke();"
+    , "    ctx.restore();"
+    , "  }"
+    , "  function drawChargeField(projected, atoms) {"
+    , "    const charged = atoms.filter(function (atom) { return Number(atom.charge || 0) !== 0; }).sort(function (left, right) {"
+    , "      return (projected.get(left.id) || { z: 0 }).z - (projected.get(right.id) || { z: 0 }).z;"
+    , "    });"
+    , "    if (!charged.length) return;"
+    , "    ctx.save();"
+    , "    charged.forEach(function (atom) {"
+    , "      const point = projected.get(atom.id);"
+    , "      if (!point) return;"
+    , "      const magnitude = Math.min(3, Math.abs(Number(atom.charge || 0)));"
+    , "      const fieldRadius = Math.max(46, point.radius * (4.3 + magnitude * 0.7));"
+    , "      const color = chargeColor(atom.charge);"
+    , "      const gradient = ctx.createRadialGradient(point.x, point.y, Math.max(3, point.radius * 0.7), point.x, point.y, fieldRadius);"
+    , "      gradient.addColorStop(0, hexToRgba(color, 0.30));"
+    , "      gradient.addColorStop(0.48, hexToRgba(color, 0.13));"
+    , "      gradient.addColorStop(1, hexToRgba(color, 0));"
+    , "      ctx.fillStyle = gradient;"
+    , "      ctx.beginPath();"
+    , "      ctx.arc(point.x, point.y, fieldRadius, 0, Math.PI * 2);"
+    , "      ctx.fill();"
+    , "    });"
     , "    ctx.restore();"
     , "  }"
     , "  function render() {"
@@ -737,15 +766,14 @@ viewerHTML title payloadValue =
     , "    const size = { w: canvas.clientWidth || 900, h: canvas.clientHeight || 640 };"
     , "    ctx.clearRect(0, 0, size.w, size.h);"
     , "    const modelBounds = bounds(payload.atoms);"
-    , "    const atomMap = new Map(payload.atoms.map(function (atom) { return [atom.id, atom]; }));"
     , "    const projected = new Map();"
     , "    payload.atoms.forEach(function (atom) { projected.set(atom.id, project(atom, modelBounds, size)); });"
     , "    drawAxes(modelBounds, size);"
+    , "    drawChargeField(projected, payload.atoms);"
     , "    payload.bonds.forEach(function (bond) {"
     , "      const a = projected.get(bond.a);"
     , "      const b = projected.get(bond.b);"
-    , "      const chargeGradient = bond.kind === 'ionic' ? chargeGradientForEdge(atomMap, bond) : null;"
-    , "      drawEdge(a, b, bond.kind === 'system' ? '#9aa6b2' : '#8a95a3', { offset: 0, alpha: bond.kind === 'ionic' ? 0.92 : (bond.kind === 'system' ? 0.24 : 0.58), width: Math.max(2, Math.min(5, 1.7 + Number(bond.order || 1))), colorA: chargeGradient ? chargeGradient.colorA : null, colorB: chargeGradient ? chargeGradient.colorB : null });"
+    , "      drawEdge(a, b, bond.kind === 'system' ? '#9aa6b2' : '#8a95a3', { offset: 0, alpha: bond.kind === 'ionic' ? 0.58 : (bond.kind === 'system' ? 0.24 : 0.58), width: Math.max(2, Math.min(5, 1.7 + Number(bond.order || 1))) });"
     , "    });"
     , "    if (state.systems) {"
     , "      const lanes = systemEdgeLaneMap(payload.systems);"
@@ -755,13 +783,11 @@ viewerHTML title payloadValue =
     , "          const laneIds = lanes.get(edgeKey(edge.a, edge.b)) || [system.id];"
     , "          const lane = Math.max(0, laneIds.indexOf(system.id));"
     , "          const laneOffset = (lane - (laneIds.length - 1) / 2) * 7;"
-    , "          const chargeGradient = isIonicSystem(system) ? chargeGradientForEdge(atomMap, edge) : null;"
-    , "          drawEdge(projected.get(edge.a), projected.get(edge.b), system.color, {"
+    , "          const edgeColor = isIonicSystem(system) ? 'rgba(83, 91, 99, 0.62)' : system.color;"
+    , "          drawEdge(projected.get(edge.a), projected.get(edge.b), edgeColor, {"
     , "            offset: laneOffset,"
     , "            alpha: active ? 1 : 0.18,"
-    , "            width: active ? 4 : 2,"
-    , "            colorA: chargeGradient ? chargeGradient.colorA : null,"
-    , "            colorB: chargeGradient ? chargeGradient.colorB : null"
+    , "            width: active ? 4 : 2"
     , "          });"
     , "        });"
     , "      });"
@@ -1000,14 +1026,41 @@ writeMoleculeViewerCollectionHTML path title molecules = do
 
 openMoleculeViewer :: FilePath -> IO Bool
 openMoleculeViewer path = do
-  result <- try (callProcess opener openerArgs) :: IO (Either SomeException ())
+  uri <- moleculeViewerURI path
+  result <- try (callProcess opener (openerArgs uri)) :: IO (Either SomeException ())
   pure (either (const False) (const True) result)
   where
     (opener, openerArgs) =
       case os of
-        "darwin" -> ("open", [path])
-        "mingw32" -> ("cmd", ["/c", "start", "", path])
-        _ -> ("xdg-open", [path])
+        "darwin" -> ("open", \uri -> [uri])
+        "mingw32" -> ("cmd", \uri -> ["/c", "start", "", uri])
+        _ -> ("xdg-open", \uri -> [uri])
+
+moleculeViewerURI :: FilePath -> IO String
+moleculeViewerURI path = do
+  absolute <- makeAbsolute path
+  let slashPath = map normaliseSeparator absolute
+  pure (fileUriPrefix slashPath ++ percentEncodePath (uriPath slashPath))
+  where
+    normaliseSeparator '\\' = '/'
+    normaliseSeparator c = c
+    fileUriPrefix ('/' : '/' : _) = "file://"
+    fileUriPrefix ('/' : _) = "file://"
+    fileUriPrefix _ = "file:///"
+    uriPath ('/' : '/' : rest) = rest
+    uriPath value = value
+
+percentEncodePath :: String -> String
+percentEncodePath = concatMap encodeChar
+  where
+    encodeChar c
+      | isSafeUriPathChar c = [c]
+      | otherwise = concatMap encodeByte (BS.unpack (TE.encodeUtf8 (T.singleton c)))
+    isSafeUriPathChar c =
+      isAscii c && (isAlphaNum c || c `elem` ("-._~/:" :: String))
+    encodeByte byte =
+      let hex = map toUpper (showHex byte "")
+      in '%' : if length hex == 1 then '0' : hex else hex
 
 elementStyle :: AtomicSymbol -> (String, String, Double)
 elementStyle atomSymbol =

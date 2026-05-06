@@ -5,7 +5,12 @@
 module Main (main) where
 
 import Test.Hspec
-import Chem.IO.MoleculeViewer (moleculeViewerCollectionHTML, moleculeViewerHTML, writeMoleculeViewerHTML)
+import Chem.IO.MoleculeViewer
+  ( moleculeViewerCollectionHTML
+  , moleculeViewerHTML
+  , moleculeViewerURI
+  , writeMoleculeViewerHTML
+  )
 import Chem.IO.SDF (readSDF, parseSDF, parseSDFRecords)
 import Chem.IO.MoleculeJSON (moleculeFromJSON, moleculeToJSON)
 import Chem.IO.SMILES (moleculeToSMILES, parseSMILES)
@@ -416,12 +421,14 @@ spec = do
       html `shouldContain` "bridge_h4_3c2e"
       html `shouldNotContain` "Molecule Report"
 
-    it "renders ionic edges with charge-gradient support" $ do
+    it "renders ionic charge as a molecule-level charge field" $ do
       let html = moleculeViewerHTML "Sodium chloride viewer" sodiumChloride
       html `shouldContain` "\"kind\":\"ionic\""
       html `shouldContain` "positiveChargeColor"
       html `shouldContain` "negativeChargeColor"
-      html `shouldContain` "chargeGradientForEdge"
+      html `shouldContain` "drawChargeField"
+      html `shouldNotContain` "chargeGradientForEdge"
+      html `shouldNotContain` "setLineDash"
 
     it "renders a collection viewer for multiple built-in molecules" $ do
       let html = moleculeViewerCollectionHTML "Example viewer" [("Diborane", diboranePretty), ("Morphine", morphinePretty)]
@@ -440,6 +447,18 @@ spec = do
       exists <- doesFileExist written
       removeDirectoryRecursive path
       exists `shouldBe` True
+
+    it "reports a portable file URL for written viewers" $ do
+      tempDir <- getTemporaryDirectory
+      (path, handle) <- openTempFile tempDir "moladt-viewer"
+      hClose handle
+      removeFile path
+      let outputPath = path </> "diborane viewer.html"
+      written <- writeMoleculeViewerHTML outputPath "Diborane viewer" diboranePretty
+      uri <- moleculeViewerURI written
+      removeDirectoryRecursive path
+      take 7 uri `shouldBe` "file://"
+      uri `shouldContain` "diborane%20viewer.html"
 
   describe "Built-in Dietz examples" $ do
     it "validates the explicit morphine example and preserves both systems" $ do
