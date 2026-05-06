@@ -34,6 +34,11 @@ triple, and quadruple bonds are one-edge systems with `2`, `4`, `6`, and `8`
 shared electrons, displayed as `single covalent`, `double covalent`,
 `triple covalent`, and `quadruple covalent`.
 
+System identifiers are stable display IDs. Parsers and checked examples assign
+them to named or multi-edge systems first, then to ordinary one-edge covalent
+systems. In benzene, `SystemId 1` is the `pi_ring`; the sigma edge systems
+follow.
+
 ## Why This Matters
 
 Bayesian tasks need to inspect and modify molecules repeatedly.

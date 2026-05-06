@@ -118,6 +118,9 @@ The parser supports a conservative chemistry subset and lifts it into MolADT.
 Aromatic six-membered rings can become explicit `pi_ring` Dietz systems, while
 ordinary single/double/triple/quadruple SMILES bonds become `single covalent`,
 `double covalent`, `triple covalent`, and `quadruple covalent` edge systems.
+Named or multi-edge systems receive the first stable `SystemId` values, so
+benzene has `SystemId 1` for `pi_ring` followed by the ordinary one-edge
+covalent systems.
 
 ## MolADT To SMILES
 

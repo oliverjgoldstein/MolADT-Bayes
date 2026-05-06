@@ -484,7 +484,7 @@ extendBondSpec current maybeKind maybeDirection =
 
 normalizeSMILESSystems :: S.Set Edge -> [BondingSystem] -> S.Set Edge -> S.Set AtomId -> [BondingSystem]
 normalizeSMILESSystems bondEdges systems' aromaticCandidateEdges aromaticAtoms =
-  retainedSystems ++ aromaticSystems
+  aromaticSystems ++ retainedSystems
   where
     aromaticRings = S.fromList (detectAromaticSixRings aromaticCandidateEdges)
     lowercaseAromaticRings = S.fromList (detectLowercaseAromaticSixRings bondEdges aromaticCandidateEdges aromaticAtoms)
@@ -738,8 +738,9 @@ renderBondOrders molecule renderedIds = do
       | S.size (memberEdges system) == 1
       , getNN (sharedElectrons system) `elem` [2, 4, 6, 8] =
           let edge = head (S.toAscList (memberEdges system))
+              order = getNN (sharedElectrons system) `div` 2
           in if edge `M.member` acc
-               then pure (M.insert edge (getNN (sharedElectrons system) `div` 2) acc)
+               then pure (M.insertWith max edge order acc)
                else pure acc
       | otherwise = Left "SMILES rendering only supports localized double/triple bonds and six-edge pi rings"
 

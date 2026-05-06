@@ -116,6 +116,8 @@ spec = do
         Left err -> expectationFailure (errorBundlePretty err)
         Right mol -> do
           length (systems mol) `shouldBe` 13
+          fst (head (systems mol)) `shouldBe` SystemId 1
+          tag (snd (head (systems mol))) `shouldBe` Just "pi_ring"
           countUnnamedEdgeSystems 2 mol `shouldBe` 12
           countTag (Just "pi_ring") mol `shouldBe` 1
 
@@ -155,6 +157,8 @@ spec = do
             countSymbol H mol `shouldBe` 6
             S.size (moleculeEdges mol) `shouldBe` 12
             length (systems mol) `shouldBe` 13
+            fst (head (systems mol)) `shouldBe` SystemId 1
+            tag (snd (head (systems mol))) `shouldBe` Just "pi_ring"
             countUnnamedEdgeSystems 2 mol `shouldBe` 12
             countTag (Just "pi_ring") mol `shouldBe` 1
 

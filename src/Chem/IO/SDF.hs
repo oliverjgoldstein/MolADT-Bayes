@@ -300,17 +300,17 @@ buildMolecule atomList bonds =
   let atomMap = M.fromList [(atomID atom, atom) | atom <- atomList]
       rings = detectSixRings bonds
       aromaticRingEdges = S.unions rings
-      edgeSystems =
-        [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) label)
-        | (idx, (edge, order)) <- zip [1 ..] bonds
-        , let (electrons, label) = bondElectronSystem order (edge `S.member` aromaticRingEdges)
-        ]
-      ringOffset = length edgeSystems
       ringSystems =
         [ (SystemId idx, mkBondingSystem (NonNegative 6) ring (Just "pi_ring"))
-        | (idx, ring) <- zip [ringOffset + 1 ..] rings
+        | (idx, ring) <- zip [1 ..] rings
         ]
-      sysList = edgeSystems ++ ringSystems
+      edgeOffset = length ringSystems
+      edgeSystems =
+        [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) label)
+        | (idx, (edge, order)) <- zip [edgeOffset + 1 ..] bonds
+        , let (electrons, label) = bondElectronSystem order (edge `S.member` aromaticRingEdges)
+        ]
+      sysList = ringSystems ++ edgeSystems
   in Molecule atomMap sysList emptySmilesStereochemistry
 
 bondElectronSystem :: Int -> Bool -> (Int, Maybe String)

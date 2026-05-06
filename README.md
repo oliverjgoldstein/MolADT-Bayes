@@ -59,6 +59,9 @@ total electrons shared over each edge. For benzene, a C-C edge is shown as
 `shared=3e` and `order=1.50`: `2e` from the one-edge `single covalent` system plus
 `1e/edge` from the six-electron `pi_ring`. The viewer lists the same explicit
 bonding systems.
+System identifiers are stable display IDs. Checked examples and parsers put
+named or multi-edge systems first, so benzene uses `SystemId 1` for `pi_ring`
+and then numbers the ordinary one-edge covalent systems after it.
 Shells are optional on atoms, and `elementAttributes` now carries the default
 shell data used by simple constructors.
 
