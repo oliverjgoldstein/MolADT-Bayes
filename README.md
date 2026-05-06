@@ -95,7 +95,8 @@ around the molecule without hiding the molecule fields.
   hydrogens, and bonding systems as typed concepts.
 - **Inspectable outputs**: the standalone viewer shows atoms, every edge, and
   explicit electron-sharing systems from the same typed payload. Charge renders
-  as blue/red halos around charged atoms, and ionic edges draw a charge gradient.
+  as blue/red halos around charged atoms; atoms in ionic bonding systems get
+  larger, more opaque charge gradients, and ionic edges draw a charge gradient.
   Ordinary covalent edges are dark grey one/two/three/four-line strokes for
   single/double/triple/quadruple bonds and are not repeated as page labels;
   non-standard systems use a separate coloured overlay.

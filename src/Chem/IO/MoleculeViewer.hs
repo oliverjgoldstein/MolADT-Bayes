@@ -11,7 +11,7 @@ module Chem.IO.MoleculeViewer
   , openMoleculeViewer
   ) where
 
-import           Control.Exception (SomeException, try)
+import           Control.Exception (IOException, try)
 import qualified Data.Aeson as A
 import           Data.Aeson ((.=))
 import qualified Data.ByteString as BS
@@ -23,9 +23,11 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import           Numeric (showHex)
 import           System.Directory (createDirectoryIfMissing, makeAbsolute)
+import           System.Environment (lookupEnv)
+import           System.Exit (ExitCode(..))
 import           System.FilePath (takeDirectory)
 import           System.Info (os)
-import           System.Process (callProcess)
+import           System.Process (readProcessWithExitCode)
 
 import           Chem.Dietz
 import           Chem.Molecule
@@ -661,6 +663,13 @@ viewerHTML title payloadValue =
     , "    });"
     , "    return keys;"
     , "  }"
+    , "  function ionicAtomIdSet(systems) {"
+    , "    const ids = new Set();"
+    , "    (systems || []).forEach(function (system) {"
+    , "      if (isIonicSystem(system)) system.edges.forEach(function (edge) { ids.add(Number(edge.a)); ids.add(Number(edge.b)); });"
+    , "    });"
+    , "    return ids;"
+    , "  }"
     , "  function chargeColor(charge) {"
     , "    if (Number(charge) > 0) return positiveChargeColor;"
     , "    if (Number(charge) < 0) return negativeChargeColor;"
@@ -806,7 +815,7 @@ viewerHTML title payloadValue =
     , "      });"
     , "    });"
     , "  }"
-    , "  function drawChargeField(projected, atoms) {"
+    , "  function drawChargeField(projected, atoms, ionicAtomIds) {"
     , "    const charged = atoms.filter(function (atom) { return Number(atom.charge || 0) !== 0; }).sort(function (left, right) {"
     , "      return (projected.get(left.id) || { z: 0 }).z - (projected.get(right.id) || { z: 0 }).z;"
     , "    });"
@@ -816,11 +825,13 @@ viewerHTML title payloadValue =
     , "      const point = projected.get(atom.id);"
     , "      if (!point) return;"
     , "      const magnitude = Math.min(3, Math.abs(Number(atom.charge || 0)));"
-    , "      const fieldRadius = Math.max(46, point.radius * (4.3 + magnitude * 0.7));"
+    , "      const ionic = ionicAtomIds && ionicAtomIds.has(atom.id);"
+    , "      const fieldRadius = ionic ? Math.max(120, point.radius * (9.8 + magnitude * 1.2)) : Math.max(46, point.radius * (4.3 + magnitude * 0.7));"
     , "      const color = chargeColor(atom.charge);"
     , "      const gradient = ctx.createRadialGradient(point.x, point.y, Math.max(3, point.radius * 0.7), point.x, point.y, fieldRadius);"
-    , "      gradient.addColorStop(0, hexToRgba(color, 0.30));"
-    , "      gradient.addColorStop(0.48, hexToRgba(color, 0.13));"
+    , "      gradient.addColorStop(0, hexToRgba(color, ionic ? 0.58 : 0.30));"
+    , "      gradient.addColorStop(0.48, hexToRgba(color, ionic ? 0.30 : 0.13));"
+    , "      gradient.addColorStop(0.82, hexToRgba(color, ionic ? 0.11 : 0.035));"
     , "      gradient.addColorStop(1, hexToRgba(color, 0));"
     , "      ctx.fillStyle = gradient;"
     , "      ctx.beginPath();"
@@ -839,8 +850,9 @@ viewerHTML title payloadValue =
     , "    const projected = new Map();"
     , "    payload.atoms.forEach(function (atom) { projected.set(atom.id, project(atom, modelBounds, size)); });"
     , "    const standardByEdge = standardSystemByEdge(payload.systems);"
+    , "    const ionicAtomIds = ionicAtomIdSet(payload.systems);"
     , "    drawAxes(modelBounds, size);"
-    , "    drawChargeField(projected, payload.atoms);"
+    , "    drawChargeField(projected, payload.atoms, ionicAtomIds);"
     , "    payload.bonds.forEach(function (bond) {"
     , "      const a = projected.get(bond.a);"
     , "      const b = projected.get(bond.b);"
@@ -1120,14 +1132,21 @@ writeMoleculeViewerCollectionHTML path title molecules = do
 openMoleculeViewer :: FilePath -> IO Bool
 openMoleculeViewer path = do
   uri <- moleculeViewerURI path
-  result <- try (callProcess opener (openerArgs uri)) :: IO (Either SomeException ())
-  pure (either (const False) (const True) result)
-  where
-    (opener, openerArgs) =
-      case os of
-        "darwin" -> ("open", \uri -> [uri])
-        "mingw32" -> ("cmd", \uri -> ["/c", "start", "", uri])
-        _ -> ("xdg-open", \uri -> [uri])
+  mOverride <- lookupEnv "MOLADT_VIEWER_OPENER"
+  let defaultCommand =
+        case os of
+          "darwin" -> ("open", [uri])
+          "mingw32" -> ("cmd", ["/c", "start", "", uri])
+          _ -> ("xdg-open", [uri])
+      command = maybe defaultCommand (\opener -> (opener, [uri])) mOverride
+  runViewerOpener command
+
+runViewerOpener :: (FilePath, [String]) -> IO Bool
+runViewerOpener (opener, args) = do
+  result <- try (readProcessWithExitCode opener args "") :: IO (Either IOException (ExitCode, String, String))
+  case result of
+    Right (ExitSuccess, _, _) -> pure True
+    _ -> pure False
 
 moleculeViewerURI :: FilePath -> IO String
 moleculeViewerURI path = do

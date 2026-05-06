@@ -314,7 +314,7 @@ haskell-to-smiles: haskell-check-stack
 	$(STACK_CMD) run moladtbayes -- to-smiles molecules/benzene.sdf
 
 haskell-view view: haskell-check-stack
-	$(STACK_CMD) run moladtbayes -- view-examples --output "$(VIEWER_COLLECTION_OUTPUT)" $(VIEWER_TITLE_ARG) $(VIEWER_EXAMPLES_ARG) $(OPEN_VIEWER_ARG)
+	$(STACK_CMD) run moladtbayes -- view-examples --output "$(VIEWER_COLLECTION_OUTPUT)" $(VIEWER_TITLE_ARG) $(VIEWER_EXAMPLES_ARG) --open-viewer
 
 haskell-viewer: haskell-check-stack
 	$(STACK_CMD) run moladtbayes -- view-html "$(VIEWER_INPUT)" --output "$(VIEWER_OUTPUT)" $(VIEWER_FORMAT_ARG) $(VIEWER_TITLE_ARG) $(OPEN_VIEWER_ARG)

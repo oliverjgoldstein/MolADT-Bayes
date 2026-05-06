@@ -10,6 +10,7 @@ import Chem.IO.MoleculeViewer
   , moleculeViewerHTML
   , moleculeViewerPayload
   , moleculeViewerURI
+  , openMoleculeViewer
   , writeMoleculeViewerHTML
   )
 import Chem.IO.SDF (readSDF, parseSDF, parseSDFRecords)
@@ -27,6 +28,7 @@ import Data.List (isInfixOf)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import System.Directory (doesFileExist, getTemporaryDirectory, removeDirectoryRecursive, removeFile)
+import System.Environment (setEnv, unsetEnv)
 import System.FilePath ((</>))
 import System.IO (hClose, openTempFile)
 import Text.Megaparsec (errorBundlePretty)
@@ -432,6 +434,10 @@ spec = do
       html `shouldContain` "positiveChargeColor"
       html `shouldContain` "negativeChargeColor"
       html `shouldContain` "drawChargeField"
+      html `shouldContain` "ionicAtomIdSet"
+      html `shouldContain` "ionicAtomIds.has(atom.id)"
+      html `shouldContain` "Math.max(120, point.radius * (9.8 + magnitude * 1.2))"
+      html `shouldContain` "hexToRgba(color, ionic ? 0.58 : 0.30)"
       html `shouldContain` "drawBondLines"
       html `shouldContain` "chargeGradientForEdge"
       html `shouldContain` "displaySystems"
@@ -483,6 +489,19 @@ spec = do
       removeDirectoryRecursive path
       take 7 uri `shouldBe` "file://"
       uri `shouldContain` "diborane%20viewer.html"
+
+    it "returns False when the configured viewer opener is unavailable" $ do
+      tempDir <- getTemporaryDirectory
+      (path, handle) <- openTempFile tempDir "moladt-viewer"
+      hClose handle
+      removeFile path
+      let outputPath = path </> "viewer with space.html"
+      written <- writeMoleculeViewerHTML outputPath "Diborane viewer" diboranePretty
+      setEnv "MOLADT_VIEWER_OPENER" "definitely-not-a-viewer-opener"
+      opened <- openMoleculeViewer written
+      unsetEnv "MOLADT_VIEWER_OPENER"
+      removeDirectoryRecursive path
+      opened `shouldBe` False
 
   describe "Built-in Dietz examples" $ do
     it "validates the explicit morphine example and preserves both systems" $ do

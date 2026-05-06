@@ -260,13 +260,19 @@ writeViewerAndMaybeOpen outputPath title molecule shouldOpen = do
       ++ " bonding systems."
   putStrLn ("Viewer HTML: " ++ written)
   uri <- moleculeViewerURI written
+  putStrLn ""
   putStrLn ("Viewer URL: " ++ uri)
+  putStrLn ""
   if shouldOpen
     then do
       opened <- openMoleculeViewer written
       if opened
         then putStrLn ("Viewer opened: " ++ uri)
-        else putStrLn ("Viewer open request failed; open this URL manually: " ++ uri)
+        else do
+          putStrLn "Viewer open request failed."
+          putStrLn ""
+          putStrLn ("Open this URL manually: " ++ uri)
+          putStrLn ""
     else pure ()
 
 writeViewerCollectionAndMaybeOpen :: FilePath -> String -> [(String, Molecule)] -> Bool -> IO ()
@@ -278,13 +284,19 @@ writeViewerCollectionAndMaybeOpen outputPath title molecules shouldOpen = do
       ++ " examples."
   putStrLn ("Viewer HTML: " ++ written)
   uri <- moleculeViewerURI written
+  putStrLn ""
   putStrLn ("Viewer URL: " ++ uri)
+  putStrLn ""
   if shouldOpen
     then do
       opened <- openMoleculeViewer written
       if opened
         then putStrLn ("Viewer opened: " ++ uri)
-        else putStrLn ("Viewer open request failed; open this URL manually: " ++ uri)
+        else do
+          putStrLn "Viewer open request failed."
+          putStrLn ""
+          putStrLn ("Open this URL manually: " ++ uri)
+          putStrLn ""
     else pure ()
 
 renderValidated :: Molecule -> IO ()
