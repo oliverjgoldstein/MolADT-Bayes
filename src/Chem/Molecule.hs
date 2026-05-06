@@ -3,7 +3,7 @@
 
 -- | Molecule ADT built on Dietz constitution:
 --   - atoms      : Map AtomId Atom (element data, charge, coordinates)
---   - systems    : Dietz bonding systems, including one-edge 2/4/6e bonds
+--   - systems    : Dietz bonding systems, including one-edge 0/2/4/6/8e edges
 --   Distances/coordinates are stored in Angstroms.
 
 module Chem.Molecule
@@ -505,9 +505,19 @@ formatSystemLabel sid bs =
 
 systemDisplayLabel :: BondingSystem -> Maybe String
 systemDisplayLabel bs =
-  case covalentLabel bs of
+  case ionicLabel bs of
     Just label -> Just label
-    Nothing -> tag bs
+    Nothing ->
+      case covalentLabel bs of
+        Just label -> Just label
+        Nothing -> tag bs
+
+ionicLabel :: BondingSystem -> Maybe String
+ionicLabel bs
+  | tag bs == Just "ionic"
+  , S.size (memberEdges bs) == 1
+  , getNN (sharedElectrons bs) == 0 = Just "ionic"
+  | otherwise = Nothing
 
 covalentLabel :: BondingSystem -> Maybe String
 covalentLabel bs
@@ -521,6 +531,8 @@ covalentLabel bs
 
 formatEdgeSystemRef :: SystemId -> BondingSystem -> String
 formatEdgeSystemRef sid bs
+  | ionicLabel bs == Just "ionic" =
+      label ++ ":" ++ formatElectrons edgeElectrons
   | S.size (memberEdges bs) == 1 && getNN (sharedElectrons bs) `elem` [2, 4, 6, 8] =
       label ++ ":" ++ formatElectrons edgeElectrons
   | otherwise =

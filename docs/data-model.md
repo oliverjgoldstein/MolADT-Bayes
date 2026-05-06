@@ -27,6 +27,8 @@ Every edge belongs to a bonding system. Conventional single, double, triple,
 and quadruple bonds are one-edge systems with `2`, `4`, `6`, and `8` shared
 electrons, displayed as `single covalent`, `double covalent`,
 `triple covalent`, and `quadruple covalent`.
+Ionic contacts are one-edge systems too: they have `0` shared electrons, tag
+`ionic`, and atom-local formal charge.
 Pretty-printing derives edge rows and shared-electron totals from the bonding
 systems.
 
@@ -82,8 +84,8 @@ formal charge. That is why downstream code can ask about the molecule directly
 instead of reparsing a notation string.
 
 `Shells` is optional (`Maybe Orb.Shells`). `elementAttributes` contains the
-default shell data for each element, and `elementShells` is retained only as a
-compatibility wrapper around `defaultShells . elementAttributes`.
+default shell data for each element, so display code can read element data and
+default shells from one place.
 
 ## Bonding Systems
 
@@ -106,6 +108,7 @@ That is how MolADT can represent things like:
 - benzene `pi_ring`
 - diborane `3c-2e` bridges
 - ferrocene Cp/metal systems
+- sodium chloride as charged atoms plus one 0e `ionic` edge system
 
 Example shape for one benzene-style pi system:
 

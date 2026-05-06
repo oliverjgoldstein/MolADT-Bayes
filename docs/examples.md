@@ -11,6 +11,7 @@ The examples show why MolADT is useful as typed data.
 | Morphine | `stack run moladtbayes -- pretty-example morphine` | fused topology and stereo annotations |
 | Diborane | `stack run moladtbayes -- pretty-example diborane` | two explicit `3c-2e` bridge systems |
 | Ferrocene | `stack run moladtbayes -- pretty-example ferrocene` | Cp pi systems and Fe-centred bonding pool |
+| Sodium chloride | `stack run moladtbayes -- pretty-example sodium_chloride` | atom formal charges plus one 0e `ionic` edge system |
 
 Add `--viewer-output <path>` to any built-in example when you want an HTML
 viewer for the same typed molecule.
@@ -24,6 +25,8 @@ viewer for the same typed molecule.
 - Morphine: [`src/ExampleMolecules/Morphine.hs`](../src/ExampleMolecules/Morphine.hs)
 - Diborane: [`src/ExampleMolecules/Diborane.hs`](../src/ExampleMolecules/Diborane.hs)
 - Ferrocene: [`src/ExampleMolecules/Ferrocene.hs`](../src/ExampleMolecules/Ferrocene.hs)
+- Sodium chloride: [`molecules/sodium_chloride.sdf`](../molecules/sodium_chloride.sdf),
+  [`src/SampleMolecules.hs`](../src/SampleMolecules.hs)
 
 ## Boundary Notation vs MolADT
 
@@ -33,7 +36,8 @@ available to code.
 | Molecule | SMILES side | MolADT side |
 | --- | --- | --- |
 | Diborane | bridge bonding is compressed | explicit `3c-2e` systems |
-| Ferrocene | often split into ionic fragments | explicit sandwich-style bonding systems |
+| Ferrocene | often split into ionic fragments | explicit sandwich-style bonding systems plus atom formal charges |
+| Sodium chloride | ionic state is implicit in charge notation | `Na+` and `Cl-` atoms plus one 0e `ionic` system |
 | Morphine | ring closures are digit bookkeeping | every edge as a bonding system plus stereo layer |
 
 For example, diborane is represented with named bridge systems:
@@ -55,12 +59,26 @@ diboranePretty = Molecule
   , systems =
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3), Edge (AtomId 2) (AtomId 3)]) (Just "bridge_h3_3c2e"))
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 4), Edge (AtomId 2) (AtomId 4)]) (Just "bridge_h4_3c2e"))
-      , (SystemId 3, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
-      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 5)]) Nothing)
-      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 6)]) Nothing)
-      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 7)]) Nothing)
-      , (SystemId 7, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 8)]) Nothing)
+      , (SystemId 3, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 5)]) Nothing)
+      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 6)]) Nothing)
+      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 7)]) Nothing)
+      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 8)]) Nothing)
       ]
+  , smilesStereochemistry = emptySmilesStereochemistry
+  }
+```
+
+Sodium chloride uses the same edge-as-system rule with no covalent electrons:
+
+```haskell
+sodiumChloride :: Molecule
+sodiumChloride = Molecule
+  { atoms =
+      M.fromList
+        [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes Na, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Na), formalCharge = 1 })
+        , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes Cl, coordinate = Coordinate (mkAngstrom 2.36) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Cl), formalCharge = -1 })
+        ]
+  , systems = [(SystemId 1, mkBondingSystem (NonNegative 0) (S.fromList [Edge (AtomId 1) (AtomId 2)]) (Just "ionic"))]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
 ```
@@ -78,6 +96,7 @@ Viewer version:
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
 stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example ferrocene --viewer-output results/viewer/ferrocene.viewer.html
+stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 ```
 
 ## Standalone Example

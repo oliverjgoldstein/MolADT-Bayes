@@ -2,6 +2,7 @@
 module SampleMolecules
   ( hydrogen
   , oxygen
+  , sodiumChloride
   , water
   , methane
   ) where
@@ -51,6 +52,17 @@ oxygen = Molecule
         , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes O, coordinate = Coordinate (mkAngstrom 1.21) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes O), formalCharge = 0 })
         ]
   , systems = [(SystemId 1, mkBondingSystem (NonNegative 4) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)]
+  , smilesStereochemistry = emptySmilesStereochemistry
+  }
+
+sodiumChloride :: Molecule
+sodiumChloride = Molecule
+  { atoms =
+      M.fromList
+        [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes Na, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Na), formalCharge = 1 })
+        , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes Cl, coordinate = Coordinate (mkAngstrom 2.36) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Cl), formalCharge = -1 })
+        ]
+  , systems = [(SystemId 1, mkBondingSystem (NonNegative 0) (S.singleton (Edge (AtomId 1) (AtomId 2))) (Just "ionic"))]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
 

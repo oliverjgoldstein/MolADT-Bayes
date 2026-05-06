@@ -88,9 +88,19 @@ moleculeViewerPayload title molecule =
 
     viewerSystemLabel :: BondingSystem -> Maybe String
     viewerSystemLabel bondingSystem =
-      case covalentLabel bondingSystem of
+      case ionicLabel bondingSystem of
         Just label -> Just label
-        Nothing -> tag bondingSystem
+        Nothing ->
+          case covalentLabel bondingSystem of
+            Just label -> Just label
+            Nothing -> tag bondingSystem
+
+    ionicLabel :: BondingSystem -> Maybe String
+    ionicLabel bondingSystem
+      | tag bondingSystem == Just "ionic"
+      , S.size (memberEdges bondingSystem) == 1
+      , getNN (sharedElectrons bondingSystem) == 0 = Just "ionic"
+      | otherwise = Nothing
 
     covalentLabel :: BondingSystem -> Maybe String
     covalentLabel bondingSystem
@@ -563,6 +573,7 @@ viewerHTML title payloadValue =
     , "    return display ? `#${id} ${display}` : `#${id}`;"
     , "  }"
     , "  function covalentLabel(tag, sharedElectrons, edges) {"
+    , "    if (tag === 'ionic' && edges && edges.length === 1 && sharedElectrons === 0) return 'ionic';"
     , "    if (tag && tag !== 'single' && tag !== 'double' && tag !== 'triple' && tag !== 'quadruple') return null;"
     , "    if (!edges || edges.length !== 1) return null;"
     , "    if (sharedElectrons === 2) return 'single covalent';"

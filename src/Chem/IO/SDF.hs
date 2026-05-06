@@ -308,19 +308,34 @@ buildMolecule atomList bonds =
       edgeSystems =
         [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) label)
         | (idx, (edge, order)) <- zip [edgeOffset + 1 ..] bonds
-        , let (electrons, label) = bondElectronSystem order (edge `S.member` aromaticRingEdges)
+        , let (electrons, label) = bondElectronSystem atomMap edge order (edge `S.member` aromaticRingEdges)
         ]
       sysList = ringSystems ++ edgeSystems
   in Molecule atomMap sysList emptySmilesStereochemistry
 
-bondElectronSystem :: Int -> Bool -> (Int, Maybe String)
-bondElectronSystem order inAromaticRing
+bondElectronSystem :: M.Map AtomId Atom -> Edge -> Int -> Bool -> (Int, Maybe String)
+bondElectronSystem atomMap edge order inAromaticRing
+  | order == 1 && isIonicEdge atomMap edge = (0, Just "ionic")
   | inAromaticRing && order `elem` [1, 2, 4] = (2, Nothing)
   | order == 1 = (2, Nothing)
   | order == 2 = (4, Nothing)
   | order == 3 = (6, Nothing)
   | order == 4 = (8, Nothing)
   | otherwise = (2, Just ("sdf_bond_type_" ++ show order))
+
+isIonicEdge :: M.Map AtomId Atom -> Edge -> Bool
+isIonicEdge atomMap (Edge leftId rightId) =
+  case (M.lookup leftId atomMap, M.lookup rightId atomMap) of
+    (Just leftAtom, Just rightAtom) ->
+      isIonicPair leftAtom rightAtom || isIonicPair rightAtom leftAtom
+    _ -> False
+
+isIonicPair :: Atom -> Atom -> Bool
+isIonicPair cation anion =
+  formalCharge cation > 0
+    && formalCharge anion < 0
+    && symbol (attributes cation) `elem` [Na]
+    && symbol (attributes anion) `elem` [F, Cl, Br, I, O, N, S]
 
 
 chunksOf :: Int -> [a] -> [[a]]

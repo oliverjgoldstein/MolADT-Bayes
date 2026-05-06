@@ -38,7 +38,7 @@ import           System.Environment (getArgs, lookupEnv)
 import           System.FilePath (takeBaseName, (</>))
 import           Text.Megaparsec (errorBundlePretty)
 import           Text.Read (readMaybe)
-import           SampleMolecules (methane, water)
+import           SampleMolecules (methane, sodiumChloride, water)
 
 main :: IO ()
 main = do
@@ -78,6 +78,7 @@ usage = unlines
   , "  stack run moladtbayes -- parse-sdf-timing path/to/file.sdf_or_sdf_directory 1000"
   , "  stack run moladtbayes -- pretty-example benzene"
   , "  stack run moladtbayes -- pretty-example morphine"
+  , "  stack run moladtbayes -- pretty-example sodium_chloride"
   , "  stack run moladtbayes -- pretty-example ferrocene --viewer-output results/viewer/ferrocene.viewer.html"
   , "  stack run moladtbayes -- view-examples --output results/viewer/haskell-examples.viewer.html --open-viewer"
   , "  stack run moladtbayes -- view-html molecules/benzene.sdf --output results/viewer/benzene.viewer.html"
@@ -160,7 +161,7 @@ runPrettyExample rawName rawArgs =
           putStrLn $
             "Unknown built-in example `"
             ++ rawName
-            ++ "`. Choose one of: benzene, diborane, ferrocene, morphine."
+            ++ "`. Choose one of: benzene, diborane, ferrocene, morphine, sodium_chloride."
         Just (title, note, molecule) -> do
           putStrLn title
           putStrLn note
@@ -522,6 +523,10 @@ lookupPrettyExample rawName =
           , "Dietz-style ADT with two cyclopentadienyl pi systems and an Fe-Cp coordination system."
         , ferrocenePretty
         )
+    "sodium-chloride" ->
+      sodiumChlorideExample
+    "sodium_chloride" ->
+      sodiumChlorideExample
     "morphine" ->
       Just
         ( "Morphine (explicit Dietz skeleton)"
@@ -529,6 +534,13 @@ lookupPrettyExample rawName =
         , morphinePretty
         )
     _ -> Nothing
+  where
+    sodiumChlorideExample =
+      Just
+        ( "Sodium chloride (NaCl)"
+        , "Dietz-style ADT with Na+ and Cl- formal charges plus one 0e ionic bonding system over the Na-Cl edge."
+        , sodiumChloride
+        )
 
 defaultViewerExamples :: [(String, Molecule)]
 defaultViewerExamples =
@@ -536,6 +548,7 @@ defaultViewerExamples =
   , ("Diborane", diboranePretty)
   , ("Ferrocene", ferrocenePretty)
   , ("Morphine", morphinePretty)
+  , ("Sodium chloride", sodiumChloride)
   , ("Water", water)
   , ("Methane", methane)
   ]
@@ -550,10 +563,12 @@ lookupViewerExample rawName =
     "diborane" -> Right ("Diborane", diboranePretty)
     "ferrocene" -> Right ("Ferrocene", ferrocenePretty)
     "morphine" -> Right ("Morphine", morphinePretty)
+    "sodium-chloride" -> Right ("Sodium chloride", sodiumChloride)
+    "sodium_chloride" -> Right ("Sodium chloride", sodiumChloride)
     "water" -> Right ("Water", water)
     "methane" -> Right ("Methane", methane)
     _ ->
       Left $
         "Unknown viewer example `"
         ++ rawName
-        ++ "`. Choose from benzene, diborane, ferrocene, morphine, water, methane."
+        ++ "`. Choose from benzene, diborane, ferrocene, morphine, sodium_chloride, water, methane."

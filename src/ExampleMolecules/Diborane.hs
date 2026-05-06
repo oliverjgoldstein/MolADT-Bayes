@@ -46,11 +46,10 @@ diboranePretty = Molecule
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3), Edge (AtomId 2) (AtomId 3)]) (Just "bridge_h3_3c2e"))
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 4), Edge (AtomId 2) (AtomId 4)]) (Just "bridge_h4_3c2e"))
       ]
-        ++ [ (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)
-           , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 5))) Nothing)
-           , (SystemId 5, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 6))) Nothing)
-           , (SystemId 6, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 7))) Nothing)
-           , (SystemId 7, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 8))) Nothing)
+        ++ [ (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 5))) Nothing)
+           , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 6))) Nothing)
+           , (SystemId 5, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 7))) Nothing)
+           , (SystemId 6, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 8))) Nothing)
            ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }

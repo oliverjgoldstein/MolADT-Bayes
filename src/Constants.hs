@@ -4,7 +4,7 @@
 -- modules can focus on behaviour.
 module Constants where
 
-import Chem.Molecule (AtomicSymbol(..), ElementAttributes(..), Angstrom(..), Shells, mkAngstrom)
+import Chem.Molecule (AtomicSymbol(..), ElementAttributes(..), Angstrom(..), mkAngstrom)
 import Chem.Dietz ()
 import qualified Orbital as Orb
 import qualified Data.Map.Strict as M
@@ -145,8 +145,3 @@ elementAttributes P = ElementAttributes P 15 30.974 (Just Orb.phosphorus)
 elementAttributes Si = ElementAttributes Si 14 28.085 (Just Orb.silicon)
 elementAttributes I = ElementAttributes I 53 126.904 (Just Orb.iodine)
 elementAttributes Na = ElementAttributes Na 11 22.990 (Just Orb.sodium)
-
--- | Compatibility accessor for older code. New atom construction can take
--- shells from 'defaultShells' on 'elementAttributes'.
-elementShells :: AtomicSymbol -> Shells
-elementShells = defaultShells . elementAttributes

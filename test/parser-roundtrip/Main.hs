@@ -20,7 +20,7 @@ import System.Directory (doesFileExist, getTemporaryDirectory, removeDirectoryRe
 import System.FilePath ((</>))
 import System.IO (hClose, openTempFile)
 import Text.Megaparsec (errorBundlePretty)
-import SampleMolecules (methane, water)
+import SampleMolecules (methane, sodiumChloride, water)
 
 v3000Water :: String
 v3000Water = unlines
@@ -90,6 +90,26 @@ v3000Quadruple = unlines
   , "$$$$"
   ]
 
+v3000SodiumChloride :: String
+v3000SodiumChloride = unlines
+  [ "sodium chloride"
+  , "MolADT"
+  , "generated"
+  , "  0  0  0  0  0  0            999 V3000"
+  , "M  V30 BEGIN CTAB"
+  , "M  V30 COUNTS 2 1 0 0 0"
+  , "M  V30 BEGIN ATOM"
+  , "M  V30 1 Na 0.0000 0.0000 0.0000 0 CHG=1"
+  , "M  V30 2 Cl 2.3600 0.0000 0.0000 0 CHG=-1"
+  , "M  V30 END ATOM"
+  , "M  V30 BEGIN BOND"
+  , "M  V30 1 1 1 2"
+  , "M  V30 END BOND"
+  , "M  V30 END CTAB"
+  , "M  END"
+  , "$$$$"
+  ]
+
 -- | Run the Hspec suite defined in 'spec'.
 main :: IO ()
 main = hspec spec
@@ -139,6 +159,18 @@ spec = do
         Left err -> expectationFailure (errorBundlePretty err)
         Right mol ->
           countUnnamedEdgeSystems 8 mol `shouldBe` 1
+
+    it "maps charged sodium halide single edges to zero-electron ionic systems" $
+      case parseSDF v3000SodiumChloride of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
+          fmap formalCharge (M.lookup (AtomId 2) (atoms mol)) `shouldBe` Just (-1)
+          countTag (Just "ionic") mol `shouldBe` 1
+          getNN (sharedElectrons (snd (head (systems mol)))) `shouldBe` 0
+          case parseSDF (moleculeToSDF mol) of
+            Left err -> expectationFailure (errorBundlePretty err)
+            Right mol' -> countTag (Just "ionic") mol' `shouldBe` 1
 
     it "parses multiple SDF records from one payload" $
       case parseSDFRecords (v3000Water ++ v3000Ammonium) of
@@ -280,6 +312,13 @@ spec = do
           rendered `shouldContain` "edge share:       1e per listed edge"
           rendered `shouldContain` "SMILES Stereochemistry"
 
+    it "renders ionic bonding systems with an ionic label" $ do
+      let rendered = prettyPrintMolecule sodiumChloride
+      rendered `shouldContain` "net charge       +0"
+      rendered `shouldContain` "[#1] ionic"
+      rendered `shouldContain` "shared=0e  order=0.00"
+      rendered `shouldContain` "#1[ionic]:0e"
+
     it "accepts silicon-containing SMILES used in the ZINC slice" $ do
       case parseSMILES "C[Si](C)(C)C" of
         Left err -> expectationFailure err
@@ -318,6 +357,16 @@ spec = do
           case moleculeToSMILES mol of
             Left err -> expectationFailure err
             Right smilesText -> smilesText `shouldContain` "$"
+
+    it "parses and renders charged sodium halide ionic SMILES" $ do
+      case parseSMILES "[Na+][Cl-]" of
+        Left err -> expectationFailure err
+        Right mol -> do
+          fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
+          fmap formalCharge (M.lookup (AtomId 2) (atoms mol)) `shouldBe` Just (-1)
+          countTag (Just "ionic") mol `shouldBe` 1
+          getNN (sharedElectrons (snd (head (systems mol)))) `shouldBe` 0
+          moleculeToSMILES mol `shouldBe` Right "[Na+][Cl-]"
 
     it "parses a real ZINC entry even where the current validator is still too strict" $ do
       case parseSMILES "CC1(C)CN(C(=O)Nc2cc3ccccc3nn2)C[C@@]2(CCOC2)O1" of
@@ -382,7 +431,7 @@ spec = do
 
 -- | Minimal V2000 writer sufficient for round-trip testing.
 moleculeToSDF :: Molecule -> String
-moleculeToSDF m = unlines $ header ++ atomLines ++ bondLines ++ ["M  END"]
+moleculeToSDF m = unlines $ header ++ atomLines ++ bondLines ++ chargeLines ++ ["M  END"]
   where
     nAtoms = M.size (atoms m)
     nBonds = S.size (moleculeEdges m)
@@ -394,7 +443,22 @@ moleculeToSDF m = unlines $ header ++ atomLines ++ bondLines ++ ["M  END"]
           sym = show (symbol (attributes a))
       in unwords [show (unAngstrom x), show (unAngstrom y), show (unAngstrom z), sym, "0"]
     bondLines = map formatBond (S.toList (moleculeEdges m))
-    formatBond (Edge (AtomId i) (AtomId j)) = unwords [show i, show j, "1"]
+    formatBond edge@(Edge (AtomId i) (AtomId j)) = unwords [show i, show j, show (sdfBondOrder edge)]
+    chargeLines =
+      case [ (atomID atom, formalCharge atom) | atom <- M.elems (atoms m), formalCharge atom /= 0 ] of
+        [] -> []
+        chargedAtoms ->
+          [ "M  CHG "
+              ++ show (length chargedAtoms)
+              ++ " "
+              ++ unwords [show atomIndex ++ " " ++ show charge | (AtomId atomIndex, charge) <- chargedAtoms]
+          ]
+    sdfBondOrder edge =
+      let order = effectiveOrder m edge
+      in if abs (order - 2.0) <= 1e-9 then 2
+           else if abs (order - 3.0) <= 1e-9 then 3
+           else if abs (order - 4.0) <= 1e-9 then 4
+           else 1
 
 countSymbol :: AtomicSymbol -> Molecule -> Int
 countSymbol sym mol =

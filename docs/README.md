@@ -7,8 +7,9 @@ Use these pages as small entry points, not a second README.
 Current representation rule: every edge lives in a bonding system. Conventional
 single, double, triple, and quadruple bonds are one-edge systems with 2, 4, 6,
 and 8 shared electrons and display as `single covalent`, `double covalent`,
-`triple covalent`, and `quadruple covalent`. Pretty printing reads from the
-bonding systems and shows the total
+`triple covalent`, and `quadruple covalent`. Ionic contacts are one-edge
+systems with 0 shared electrons, display as `ionic`, and keep charge on the
+atoms. Pretty printing reads from the bonding systems and shows the total
 electrons shared over each displayed edge; viewer output lists the same explicit
 bonding systems.
 
@@ -18,7 +19,7 @@ bonding systems.
 - [ADT representation](data-model.md): the core molecule shape.
 - [Representation](representation.md): why MolADT is more than a string or graph, including type-class group actions.
 - [CLI and demo](cli-and-demo.md): command reference.
-- [Examples](examples.md): benzene, water, morphine, diborane, ferrocene.
+- [Examples](examples.md): benzene, water, morphine, diborane, ferrocene, sodium chloride.
 - [Molecule equality](molecule-equality.md): compare reordered MolADT values.
 
 ## Bayesian Path

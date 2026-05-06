@@ -54,6 +54,10 @@ data Molecule = Molecule
 triple, or quadruple bond is a one-edge `BondingSystem` with `2`, `4`, `6`, or
 `8` shared electrons. Pretty printers and viewers display these as
 `single covalent`, `double covalent`, `triple covalent`, or `quadruple covalent`.
+An ionic contact is also a one-edge `BondingSystem`, but it shares `0`
+electrons, displays as `ionic`, and stores formal charge on the atoms.
+Sodium chloride therefore has `Na#1` at `+1`, `Cl#2` at `-1`, and one 0e
+`ionic` system over the Na-Cl edge.
 Pretty printing derives display edges from the bonding systems and reports the
 total electrons shared over each edge. For benzene, a C-C edge is shown as
 `shared=3e` and `order=1.50`: `2e` from the one-edge `single covalent` system plus
@@ -79,7 +83,7 @@ around the molecule without hiding the molecule fields.
 
 ## What It Unlocks
 
-- **Clearer chemistry**: diborane bridges, ferrocene Cp/metal systems, and
+- **Clearer chemistry**: diborane bridges, ferrocene Cp/metal systems, ionic salts, and
   morphine fused topology can be represented explicitly.
 - **Safer boundaries**: SDF, SMILES, and JSON parsing happen at the edge, then
   validation runs on the typed molecule.
@@ -121,6 +125,7 @@ stack run moladtbayes -- parse molecules/benzene.sdf
 stack run moladtbayes -- parse-smiles "c1ccccc1"
 stack run moladtbayes -- pretty-example benzene
 stack run moladtbayes -- pretty-example ferrocene
+stack run moladtbayes -- pretty-example sodium_chloride
 make haskell-viewer
 ```
 
@@ -132,7 +137,7 @@ For the full first-run path, use [Quickstart](docs/quickstart.md).
 | --- | --- |
 | Understand the ADT | [ADT Representation](docs/data-model.md) |
 | See why MolADT is not just a graph | [Representation](docs/representation.md) |
-| Inspect benzene, morphine, diborane, or ferrocene | [Examples](docs/examples.md) |
+| Inspect benzene, morphine, diborane, ferrocene, or sodium chloride | [Examples](docs/examples.md) |
 | Compare reordered molecules | [Molecule Equality](docs/molecule-equality.md) |
 | Parse SDF, SMILES, or MolADT JSON | [CLI and Demo](docs/cli-and-demo.md) |
 | Export a standalone HTML viewer | [Parsing and Rendering](docs/parsing.md#viewer) |
@@ -152,6 +157,7 @@ stack run moladtbayes -- from-json benzene.moladt.json
 stack run moladtbayes -- view-html molecules/benzene.sdf --output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
+stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
 make haskell-test
 make haskell-viewer

@@ -33,6 +33,8 @@ Every edge is represented by a bonding system. Conventional single, double,
 triple, and quadruple bonds are one-edge systems with `2`, `4`, `6`, and `8`
 shared electrons, displayed as `single covalent`, `double covalent`,
 `triple covalent`, and `quadruple covalent`.
+Ionic contacts are also one-edge systems, but with `0` shared electrons, tag
+`ionic`, and formal charge on the atoms.
 
 System identifiers are stable display IDs. Parsers and checked examples assign
 them to named or multi-edge systems first, then to ordinary one-edge covalent
@@ -72,8 +74,9 @@ Examples:
 | Molecule | Boundary notation hides | MolADT keeps |
 | --- | --- | --- |
 | Benzene | aromatic shorthand | one-edge `single covalent` systems plus an explicit `pi_ring` system |
-| Diborane | bridge bonding | terminal `single covalent` systems plus two `3c-2e` systems |
-| Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Cp pi systems and an Fe-Cp coordination system |
+| Diborane | bridge bonding | four terminal B-H `single covalent` systems plus two `3c-2e` systems |
+| Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Cp pi systems, an Fe-Cp coordination system, and formal charges (`Fe#1 +2`, one `-1` carbon per Cp ring) |
+| Sodium chloride | ionic charges | `Na+` and `Cl-` atoms plus one 0e `ionic` system over the Na-Cl edge |
 | Morphine | fused ring bookkeeping | every edge as a system plus stereo annotations |
 
 ## Explicit Haskell Examples

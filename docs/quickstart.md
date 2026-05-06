@@ -16,16 +16,20 @@ If Stack is missing, the Makefile explains how to install it.
 
 ```bash
 stack run moladtbayes -- parse molecules/benzene.sdf
+stack run moladtbayes -- parse molecules/sodium_chloride.sdf
 stack run moladtbayes -- parse-smiles "c1ccccc1"
+stack run moladtbayes -- parse-smiles "[Na+][Cl-]"
 stack run moladtbayes -- pretty-example benzene
 stack run moladtbayes -- pretty-example ferrocene
+stack run moladtbayes -- pretty-example sodium_chloride
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
+stack run moladtbayes -- to-smiles molecules/sodium_chloride.sdf
 make haskell-viewer
 ```
 
 Those commands prove that SDF parsing, SMILES parsing, built-in examples, and
-SMILES rendering are wired up. The viewer command writes
-`results/viewer/benzene.viewer.html`.
+SMILES rendering are wired up for covalent and ionic cases. The viewer command
+writes `results/viewer/benzene.viewer.html`.
 
 ## Test
 

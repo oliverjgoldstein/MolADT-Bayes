@@ -11,6 +11,7 @@ MolADT treats SMILES as a boundary format, not as the internal representation.
 - simple branches
 - ring closures
 - single, double, triple, and quadruple bonds
+- charged sodium-halide ionic contact pattern, for example `[Na+][Cl-]`
 - aromatic benzene-style lowercase syntax
 - atom stereo annotations like `@` and `@@`
 - directional bond annotations like `/` and `\`
@@ -26,6 +27,8 @@ MolADT treats SMILES as a boundary format, not as the internal representation.
 
 Non-classical structures can still live in MolADT as typed examples. They just
 may not render back to the current SMILES subset.
+Supported ionic contacts do render back: they remain atom charges plus a 0e
+`ionic` bonding system internally.
 
 ## Validation
 

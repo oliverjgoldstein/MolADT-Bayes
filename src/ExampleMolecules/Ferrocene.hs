@@ -33,13 +33,13 @@ ferrocenePretty :: Molecule
 ferrocenePretty = Molecule
   { atoms =
       M.fromList
-        [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes Fe, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Fe), formalCharge = 0 })
-        , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 1.18) (mkAngstrom 0.0) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = 0 })
+        [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes Fe, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Fe), formalCharge = 2 })
+        , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 1.18) (mkAngstrom 0.0) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = -1 })
         , (AtomId 3, Atom { atomID = AtomId 3, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 0.3647) (mkAngstrom 1.122) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = 0 })
         , (AtomId 4, Atom { atomID = AtomId 4, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-0.9547)) (mkAngstrom 0.6935) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = 0 })
         , (AtomId 5, Atom { atomID = AtomId 5, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-0.9547)) (mkAngstrom (-0.6935)) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = 0 })
         , (AtomId 6, Atom { atomID = AtomId 6, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 0.3647) (mkAngstrom (-1.122)) (mkAngstrom 1.66), shells = defaultShells (elementAttributes C), formalCharge = 0 })
-        , (AtomId 7, Atom { atomID = AtomId 7, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 0.9547) (mkAngstrom 0.6935) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes C), formalCharge = 0 })
+        , (AtomId 7, Atom { atomID = AtomId 7, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom 0.9547) (mkAngstrom 0.6935) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes C), formalCharge = -1 })
         , (AtomId 8, Atom { atomID = AtomId 8, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-0.3647)) (mkAngstrom 1.122) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes C), formalCharge = 0 })
         , (AtomId 9, Atom { atomID = AtomId 9, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-1.18)) (mkAngstrom 0.0) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes C), formalCharge = 0 })
         , (AtomId 10, Atom { atomID = AtomId 10, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-0.3647)) (mkAngstrom (-1.122)) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes C), formalCharge = 0 })

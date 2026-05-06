@@ -346,7 +346,11 @@ addBond left right bondKind = do
   case bondKind of
     BondSingle ->
       modify' $ \st -> st
-        { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing : psSystems st }
+        { psSystems =
+            if isIonicEdge (psAtoms st) edge
+              then mkBondingSystem (NonNegative 0) (S.singleton edge) (Just "ionic") : psSystems st
+              else mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing : psSystems st
+        }
     BondDouble ->
       modify' $ \st -> st
         { psSystems = mkBondingSystem (NonNegative 4) (S.singleton edge) Nothing : psSystems st }
@@ -642,6 +646,20 @@ isConventionalSingleEdgeSystem system =
   S.size (memberEdges system) == 1
     && getNN (sharedElectrons system) `elem` [2, 4, 6, 8]
 
+isIonicEdge :: M.Map AtomId Atom -> Edge -> Bool
+isIonicEdge atomMap (Edge leftId rightId) =
+  case (M.lookup leftId atomMap, M.lookup rightId atomMap) of
+    (Just leftAtom, Just rightAtom) ->
+      isIonicPair leftAtom rightAtom || isIonicPair rightAtom leftAtom
+    _ -> False
+
+isIonicPair :: Atom -> Atom -> Bool
+isIonicPair cation anion =
+  formalCharge cation > 0
+    && formalCharge anion < 0
+    && symbol (attributes cation) `elem` [Na]
+    && symbol (attributes anion) `elem` [F, Cl, Br, I, O, N, S]
+
 inferredHydrogenAtom :: AtomId -> Atom -> Int -> Atom
 inferredHydrogenAtom hydrogenId hostAtom offset =
   let attrs = elementAttributes H
@@ -735,6 +753,10 @@ renderBondOrders molecule renderedIds = do
               )
               acc
               [0 .. 5]
+      | tag system == Just "ionic"
+      , getNN (sharedElectrons system) == 0
+      , S.size (memberEdges system) == 1 =
+          pure acc
       | S.size (memberEdges system) == 1
       , getNN (sharedElectrons system) `elem` [2, 4, 6, 8] =
           let edge = head (S.toAscList (memberEdges system))

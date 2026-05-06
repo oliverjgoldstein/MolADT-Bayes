@@ -24,6 +24,9 @@ This is a parser for ordinary structure exports, not a full MDL query toolkit.
 Single, double, triple, and non-aromatic quadruple bond table entries are lifted
 into one-edge bonding systems with 2, 4, 6, and 8 shared electrons, displayed as
 `single covalent`, `double covalent`, `triple covalent`, and `quadruple covalent`.
+When a single edge connects charged `Na+` to a supported charged anion (`F`,
+`Cl`, `Br`, `I`, `O`, `N`, or `S`), the parser stores the edge as a 0e `ionic`
+bonding system and keeps formal charge on the atoms.
 
 Programmatic version:
 
@@ -118,6 +121,9 @@ The parser supports a conservative chemistry subset and lifts it into MolADT.
 Aromatic six-membered rings can become explicit `pi_ring` Dietz systems, while
 ordinary single/double/triple/quadruple SMILES bonds become `single covalent`,
 `double covalent`, `triple covalent`, and `quadruple covalent` edge systems.
+The supported charged sodium-halide pattern also round-trips: `[Na+][Cl-]`
+becomes charged atoms plus a 0e `ionic` system and renders back to
+`[Na+][Cl-]`.
 Named or multi-edge systems receive the first stable `SystemId` values, so
 benzene has `SystemId 1` for `pi_ring` followed by the ordinary one-edge
 covalent systems.
