@@ -42,15 +42,6 @@ molecule = either error id (validateMolecule (Molecule
       , (AtomId 7, Atom { atomID = AtomId 7, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-1.48)) (mkAngstrom (-1.09)) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
       , (AtomId 8, Atom { atomID = AtomId 8, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 2.44) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
       ]
-  , localBonds = S.fromList
-      [ Edge (AtomId 1) (AtomId 2)
-      , Edge (AtomId 1) (AtomId 5)
-      , Edge (AtomId 2) (AtomId 3)
-      , Edge (AtomId 2) (AtomId 6)
-      , Edge (AtomId 2) (AtomId 7)
-      , Edge (AtomId 3) (AtomId 4)
-      , Edge (AtomId 5) (AtomId 8)
-      ]
   , systems =
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 3)]) Nothing)

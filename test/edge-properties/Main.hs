@@ -9,7 +9,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 import Chem.Dietz
-import Chem.Molecule (Molecule(..), addSigma, emptySmilesStereochemistry, sameMolecule)
+import Chem.Molecule (Molecule(..), addSigma, emptySmilesStereochemistry, moleculeEdges, sameMolecule)
 import ExampleMolecules.Diborane (diboranePretty)
 
 -- | Generate arbitrary atom identifiers by wrapping random integers.
@@ -23,10 +23,10 @@ prop_edgeCanonical a b = let Edge u v = mkEdge a b in u <= v
 -- | Adding the same sigma edge twice should not change the bond count.
 prop_addSigmaIdempotent :: AtomId -> AtomId -> Bool
 prop_addSigmaIdempotent i j =
-  let m0 = Molecule M.empty S.empty [] emptySmilesStereochemistry
+  let m0 = Molecule M.empty [] emptySmilesStereochemistry
       m1 = addSigma i j m0
       m2 = addSigma i j m1
-  in S.size (localBonds m2) == S.size (localBonds m1)
+  in S.size (moleculeEdges m2) == S.size (moleculeEdges m1)
 
 -- | Reordering the bonding-system list does not change molecule identity under
 -- the canonical equality helper.
@@ -42,10 +42,17 @@ prop_sameMoleculeIgnoresSystemOrder =
 -- | Removing a real edge is a structural change, not a harmless reordering.
 prop_sameMoleculeDetectsDifferentEdges :: Bool
 prop_sameMoleculeDetectsDifferentEdges =
-  case S.lookupMin (localBonds diboranePretty) of
+  case S.lookupMin (moleculeEdges diboranePretty) of
     Nothing -> False
     Just edge ->
-      let changed = diboranePretty { localBonds = S.delete edge (localBonds diboranePretty) }
+      let changed =
+            diboranePretty
+              { systems =
+                  [ (systemId, system)
+                  | (systemId, system) <- systems diboranePretty
+                  , edge `S.notMember` memberEdges system
+                  ]
+              }
       in not (sameMolecule diboranePretty changed)
 
 -- | Execute the QuickCheck properties.

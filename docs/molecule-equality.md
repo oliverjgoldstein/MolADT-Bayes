@@ -11,7 +11,6 @@ serialized molecules.
 `sameMolecule` ignores incidental ordering in:
 
 - `Map AtomId Atom`
-- `Set Edge`
 - the `systems :: [(SystemId, BondingSystem)]` list
 - `memberEdges` inside each `BondingSystem`
 - stereochemistry annotation lists
@@ -36,12 +35,7 @@ flipEdge (Edge left right) = Edge right left
 reordered :: Molecule
 reordered =
   diboranePretty
-    { localBonds =
-        S.fromList
-          [ flipEdge edge
-          | edge <- S.toList (localBonds diboranePretty)
-          ]
-    , systems =
+    { systems =
         [ ( systemId
           , system
               { memberEdges =
@@ -75,15 +69,18 @@ import ExampleMolecules.Diborane (diboranePretty)
 changed :: Molecule
 changed =
   diboranePretty
-    { localBonds =
-        S.delete (Edge (AtomId 1) (AtomId 2)) (localBonds diboranePretty)
+    { systems =
+        [ entry@(systemId, system)
+        | entry@(systemId, system) <- systems diboranePretty
+        , Edge (AtomId 1) (AtomId 2) `S.notMember` memberEdges system
+        ]
     }
 
 sameMolecule diboranePretty changed
 -- False
 ```
 
-Removing a local bond changes the molecule, so the equality check fails.
+Removing a bonding system changes the molecule, so the equality check fails.
 
 ## When To Use It
 

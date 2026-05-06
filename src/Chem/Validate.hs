@@ -37,15 +37,14 @@ type BondMap = M.Map (AtomId, AtomId) Double
 -- | Validate a molecule according to Dietz bonding rules.
 validateMolecule :: Molecule -> Either String Molecule
 validateMolecule m = do
-  let normalized = withLocalBondsAsSystems m
-      atomIDsList = M.keys (atoms normalized)
+  let atomIDsList = M.keys (atoms m)
       atomSet     = S.fromList atomIDsList
 
   let addSystem acc (_, bs) = addSystemBonds atomSet bs acc
-  fullMap <- foldM addSystem M.empty (systems normalized)
+  fullMap <- foldM addSystem M.empty (systems m)
   ensureSymmetric fullMap
-  ensureValence normalized atomSet fullMap
-  pure normalized
+  ensureValence m atomSet fullMap
+  pure m
 
 -- | Insert a bond contribution into the directed bond map, performing the
 -- endpoint and self-bond checks mandated by the validator specification.

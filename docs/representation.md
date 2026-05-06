@@ -16,7 +16,6 @@ Once parsed, the molecule is a record:
 ```haskell
 data Molecule = Molecule
   { atoms :: Map AtomId Atom
-  , localBonds :: Set Edge
   , systems :: [(SystemId, BondingSystem)]
   , smilesStereochemistry :: SmilesStereochemistry
   }
@@ -28,12 +27,12 @@ The fields stay separate because they mean different things.
 | --- | --- |
 | `atoms` | element data, coordinates, formal charge, optional shells, orbitals |
 | `systems` | canonical Dietz electron-sharing systems over atoms and edges |
-| `localBonds` | derived edge index for traversal and legacy callers |
 | `smilesStereochemistry` | stereo annotations preserved from notation |
 
-Every edge is represented by a bonding system. Conventional single, double, and
-triple bonds are one-edge systems with `2`, `4`, and `6` shared electrons,
-displayed as `single covalent`, `double covalent`, and `triple covalent`.
+Every edge is represented by a bonding system. Conventional single, double,
+triple, and quadruple bonds are one-edge systems with `2`, `4`, `6`, and `8`
+shared electrons, displayed as `single covalent`, `double covalent`,
+`triple covalent`, and `quadruple covalent`.
 
 ## Why This Matters
 
@@ -53,12 +52,12 @@ inference and inverse design:
 
 ## Not Just A Graph
 
-The edge index is an ordinary set of undirected `Edge` values. The electron
-sharing is stored in bonding systems:
+The edge network is derived from the member edges of bonding systems. The
+electron sharing is stored in those systems:
 
 ```text
-localBonds = derived edge index
-systems    = canonical electron-sharing systems over atoms and edges
+edges   = union of bonding-system member edges
+systems = canonical electron-sharing systems over atoms and edges
 ```
 
 This is closer to a layered molecule object than to a single flattened graph.
@@ -83,9 +82,9 @@ stack run moladtbayes -- pretty-example diborane
 stack run moladtbayes -- pretty-example morphine
 ```
 
-The ferrocene source uses one atom table, an edge index, and explicit Dietz
-systems. Legacy edge-index entries are normalized into one-edge `single covalent`
-systems; the named bonding systems are direct `S.fromList` values:
+The ferrocene source uses one atom table and explicit Dietz systems. Conventional
+C-C and C-H edges are one-edge `single covalent` systems; the named bonding
+systems are direct `S.fromList` values:
 
 ```haskell
 systems =

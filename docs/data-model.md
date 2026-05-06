@@ -8,7 +8,6 @@ with typed fields:
 ```haskell
 data Molecule = Molecule
   { atoms :: Map AtomId Atom
-  , localBonds :: Set Edge
   , systems :: [(SystemId, BondingSystem)]
   , smilesStereochemistry :: SmilesStereochemistry
   }
@@ -22,15 +21,14 @@ That gives one inspectable object with four layers:
 
 - `atoms`: atom table
 - `systems`: canonical Dietz bonding systems
-- `localBonds`: derived edge index for traversal and legacy callers
 - `smilesStereochemistry`: stereo annotations from boundary notation
 
-Every edge belongs to a bonding system. Conventional single, double, and
-triple bonds are one-edge systems with `2`, `4`, and `6` shared electrons,
-displayed as `single covalent`, `double covalent`, and `triple covalent`.
-`localBonds` is kept as the edge index used by graph algorithms and legacy
-callers. Pretty-printing derives edge rows and shared-electron totals from the
-bonding systems.
+Every edge belongs to a bonding system. Conventional single, double, triple,
+and quadruple bonds are one-edge systems with `2`, `4`, `6`, and `8` shared
+electrons, displayed as `single covalent`, `double covalent`,
+`triple covalent`, and `quadruple covalent`.
+Pretty-printing derives edge rows and shared-electron totals from the bonding
+systems.
 
 ## Haskell Shape
 
@@ -100,8 +98,8 @@ data BondingSystem = BondingSystem
   }
 ```
 
-`systems` is the bonding layer. `localBonds` is the derived edge index obtained
-from the systems plus any legacy input edges lifted by `withLocalBondsAsSystems`.
+`systems` is the bonding layer. The edge network is the union of
+`memberEdges` across those bonding systems.
 
 That is how MolADT can represent things like:
 
@@ -219,24 +217,23 @@ This is the shape of water as a typed molecule:
 
 ```haskell
 water :: Molecule
-water = withLocalBondsAsSystems $
+water =
   Molecule
     { atoms = M.fromList
       [ (AtomId 1, let attrs = elementAttributes O in Atom { atomID = AtomId 1, attributes = attrs, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells attrs, formalCharge = 0 })
       , (AtomId 2, let attrs = elementAttributes H in Atom { atomID = AtomId 2, attributes = attrs, coordinate = Coordinate (mkAngstrom 0.96) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells attrs, formalCharge = 0 })
       , (AtomId 3, let attrs = elementAttributes H in Atom { atomID = AtomId 3, attributes = attrs, coordinate = Coordinate (mkAngstrom (-0.32)) (mkAngstrom 0.9) (mkAngstrom 0.0), shells = defaultShells attrs, formalCharge = 0 })
       ]
-    , localBonds = S.fromList
-      [ Edge (AtomId 1) (AtomId 2)
-      , Edge (AtomId 1) (AtomId 3)
+    , systems =
+      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
+      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3)]) Nothing)
       ]
-    , systems = []
     , smilesStereochemistry = emptySmilesStereochemistry
     }
 ```
 
-The important part is that callers may still provide legacy edges, but the
-normalized molecule has two one-edge `single covalent` systems for the O-H bonds.
+The important part is that the O-H edges are themselves one-edge `single
+covalent` systems.
 
 ## Canonical Normal Form
 

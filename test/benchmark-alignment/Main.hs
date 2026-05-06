@@ -53,4 +53,4 @@ main = hspec $ do
           candidates = resultTopCandidates result
       candidates `shouldSatisfy` (not . null)
       mapM_ (\candidate -> validateMolecule (candidateMolecule candidate) `shouldSatisfy` isRight) candidates
-      formatDietzMolecule (candidateMolecule (head candidates)) `shouldContain` "local_bonds"
+      formatDietzMolecule (candidateMolecule (head candidates)) `shouldContain` "bonding_systems"

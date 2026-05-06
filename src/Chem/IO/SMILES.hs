@@ -18,7 +18,7 @@ import           Chem.Molecule
 import           Chem.Molecule.Coordinate (Coordinate(..), mkAngstrom, unAngstrom)
 import           Constants (elementAttributes)
 
-data BondKind = BondSingle | BondDouble | BondTriple | BondAromatic
+data BondKind = BondSingle | BondDouble | BondTriple | BondQuadruple | BondAromatic
   deriving (Eq, Show)
 
 data BondSpec = BondSpec
@@ -51,7 +51,7 @@ data ParseState = ParseState
   , psIndex          :: !Int
   , psNextAtomIndex  :: !Integer
   , psAtoms          :: !(M.Map AtomId Atom)
-  , psLocalBonds     :: !(S.Set Edge)
+  , psBondEdges      :: !(S.Set Edge)
   , psSystems        :: ![BondingSystem]
   , psAtomStereo     :: ![SmilesAtomStereo]
   , psBondStereo     :: ![SmilesBondStereo]
@@ -72,7 +72,7 @@ parseSMILES rawText = do
         , psIndex = 0
         , psNextAtomIndex = 1
         , psAtoms = M.empty
-        , psLocalBonds = S.empty
+        , psBondEdges = S.empty
         , psSystems = []
         , psAtomStereo = []
         , psBondStereo = []
@@ -92,30 +92,28 @@ parseSMILES rawText = do
           if not (M.null (psRingOpens st))
             then Left "Unclosed ring digit in SMILES"
             else
-              let normalizedSystems =
-                    normalizeSMILESSystems
-                      (psLocalBonds st)
-                      (reverse (psSystems st))
-                      (psAromaticEdges st)
-                      (psAromaticAtoms st)
-                  (enrichedAtoms, enrichedBonds) =
-                    inferImplicitHydrogens
-                      (psAtoms st)
-                      (psLocalBonds st)
-                      normalizedSystems
-                      (psImplicitHydrogenHosts st)
-                  assignedSystems = zipWith (\idx sys -> (SystemId idx, sys)) [1 ..] normalizedSystems
+              let
+                normalizedSystems =
+                  normalizeSMILESSystems
+                    (psBondEdges st)
+                    (reverse (psSystems st))
+                    (psAromaticEdges st)
+                    (psAromaticAtoms st)
+                (enrichedAtoms, enrichedSystems) =
+                  inferImplicitHydrogens
+                    (psAtoms st)
+                    normalizedSystems
+                    (psImplicitHydrogenHosts st)
+                assignedSystems = zipWith (\idx sys -> (SystemId idx, sys)) [1 ..] enrichedSystems
               in Right $
-                   withLocalBondsAsSystems
-                     (Molecule
-                        { atoms = enrichedAtoms
-                        , localBonds = enrichedBonds
-                        , systems = assignedSystems
-                        , smilesStereochemistry = SmilesStereochemistry
-                            { atomStereoAnnotations = reverse (psAtomStereo st)
-                            , bondStereoAnnotations = reverse (psBondStereo st)
-                            }
-                        })
+                     Molecule
+                       { atoms = enrichedAtoms
+                       , systems = assignedSystems
+                       , smilesStereochemistry = SmilesStereochemistry
+                           { atomStereoAnnotations = reverse (psAtomStereo st)
+                           , bondStereoAnnotations = reverse (psBondStereo st)
+                           }
+                       }
 
 parseLoop :: Maybe AtomRef -> Maybe BondSpec -> ParserM ()
 parseLoop current pendingBond = do
@@ -344,7 +342,7 @@ connectAtoms left right pendingBond =
 addBond :: AtomId -> AtomId -> BondKind -> ParserM ()
 addBond left right bondKind = do
   let edge = mkEdge left right
-  modify' $ \st -> st { psLocalBonds = S.insert edge (psLocalBonds st) }
+  modify' $ \st -> st { psBondEdges = S.insert edge (psBondEdges st) }
   case bondKind of
     BondSingle ->
       modify' $ \st -> st
@@ -355,6 +353,9 @@ addBond left right bondKind = do
     BondTriple ->
       modify' $ \st -> st
         { psSystems = mkBondingSystem (NonNegative 6) (S.singleton edge) Nothing : psSystems st }
+    BondQuadruple ->
+      modify' $ \st -> st
+        { psSystems = mkBondingSystem (NonNegative 8) (S.singleton edge) Nothing : psSystems st }
     BondAromatic ->
       modify' $ \st -> st
         { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing : psSystems st
@@ -482,11 +483,11 @@ extendBondSpec current maybeKind maybeDirection =
        _ -> Right spec
 
 normalizeSMILESSystems :: S.Set Edge -> [BondingSystem] -> S.Set Edge -> S.Set AtomId -> [BondingSystem]
-normalizeSMILESSystems localBonds' systems' aromaticCandidateEdges aromaticAtoms =
+normalizeSMILESSystems bondEdges systems' aromaticCandidateEdges aromaticAtoms =
   retainedSystems ++ aromaticSystems
   where
     aromaticRings = S.fromList (detectAromaticSixRings aromaticCandidateEdges)
-    lowercaseAromaticRings = S.fromList (detectLowercaseAromaticSixRings localBonds' aromaticCandidateEdges aromaticAtoms)
+    lowercaseAromaticRings = S.fromList (detectLowercaseAromaticSixRings bondEdges aromaticCandidateEdges aromaticAtoms)
     piRings = S.unions [aromaticRings, lowercaseAromaticRings]
     ringEdges = S.unions (S.toList piRings)
 
@@ -523,10 +524,10 @@ detectAromaticSixRings edges =
                ]
 
 detectLowercaseAromaticSixRings :: S.Set Edge -> S.Set Edge -> S.Set AtomId -> [S.Set Edge]
-detectLowercaseAromaticSixRings localBonds' aromaticCandidateEdges aromaticAtoms =
+detectLowercaseAromaticSixRings bondEdges aromaticCandidateEdges aromaticAtoms =
   S.toAscList discovered
   where
-    adjacency = adjacencyFromEdges localBonds'
+    adjacency = adjacencyFromEdges bondEdges
     discovered = S.fromList (concatMap (search . (:[])) (M.keys adjacency))
 
     search :: [AtomId] -> [S.Set Edge]
@@ -560,9 +561,9 @@ adjacencyFromEdges edges =
     forward = M.fromListWith (++) [ (a, [b]) | Edge a b <- S.toAscList edges ]
     backward = M.fromListWith (++) [ (b, [a]) | Edge a b <- S.toAscList edges ]
 
-inferImplicitHydrogens :: M.Map AtomId Atom -> S.Set Edge -> [BondingSystem] -> S.Set AtomId -> (M.Map AtomId Atom, S.Set Edge)
-inferImplicitHydrogens atomMap sigmaEdges systems' hosts =
-  (enrichedAtoms, enrichedBonds)
+inferImplicitHydrogens :: M.Map AtomId Atom -> [BondingSystem] -> S.Set AtomId -> (M.Map AtomId Atom, [BondingSystem])
+inferImplicitHydrogens atomMap systems' hosts =
+  (enrichedAtoms, enrichedSystems)
   where
     systemContributions =
       M.fromListWith (+)
@@ -605,11 +606,11 @@ inferImplicitHydrogens atomMap sigmaEdges systems' hosts =
         atomMap
         (zip hydrogenIds hydrogenSpecs)
 
-    enrichedBonds =
-      foldl
-        (\acc (hydrogenId, (host, _)) -> S.insert (mkEdge host hydrogenId) acc)
-        sigmaEdges
-        (zip hydrogenIds hydrogenSpecs)
+    enrichedSystems =
+      systems'
+        ++ [ mkBondingSystem (NonNegative 2) (S.singleton (mkEdge host hydrogenId)) Nothing
+           | (hydrogenId, (host, _)) <- zip hydrogenIds hydrogenSpecs
+           ]
 
 implicitHydrogenCount :: Double -> Int
 implicitHydrogenCount missingValence
@@ -639,7 +640,7 @@ implicitHydrogenValence symbol =
 isConventionalSingleEdgeSystem :: BondingSystem -> Bool
 isConventionalSingleEdgeSystem system =
   S.size (memberEdges system) == 1
-    && getNN (sharedElectrons system) `elem` [2, 4, 6]
+    && getNN (sharedElectrons system) `elem` [2, 4, 6, 8]
 
 inferredHydrogenAtom :: AtomId -> Atom -> Int -> Atom
 inferredHydrogenAtom hydrogenId hostAtom offset =
@@ -696,7 +697,7 @@ collapseTerminalHydrogens molecule =
       , symbol (attributes atom) == H
       , formalCharge atom == 0
       , not (aid `S.member` systemAtoms)
-      , let incident = [ edge | edge@(Edge x y) <- S.toList (localBonds molecule), x == aid || y == aid ]
+      , let incident = [ edge | edge@(Edge x y) <- S.toList (moleculeEdges molecule), x == aid || y == aid ]
       , length incident == 1
       , let edge = head incident
       , let host = otherEndpoint aid edge
@@ -706,7 +707,7 @@ collapseTerminalHydrogens molecule =
       ]
 
     addHydrogenCount counts aid =
-      let incident = [ edge | edge@(Edge x y) <- S.toList (localBonds molecule), x == aid || y == aid ]
+      let incident = [ edge | edge@(Edge x y) <- S.toList (moleculeEdges molecule), x == aid || y == aid ]
           host = otherEndpoint aid (head incident)
       in M.adjust (+ 1) host counts
 
@@ -714,7 +715,7 @@ renderBondOrders :: Molecule -> S.Set AtomId -> Either String (M.Map Edge Int)
 renderBondOrders molecule renderedIds = do
   let initialBondOrders = M.fromList
         [ (edge, 1)
-        | edge@(Edge a b) <- S.toAscList (localBonds molecule)
+        | edge@(Edge a b) <- S.toAscList (moleculeEdges molecule)
         , a `S.member` renderedIds
         , b `S.member` renderedIds
         ]
@@ -735,7 +736,7 @@ renderBondOrders molecule renderedIds = do
               acc
               [0 .. 5]
       | S.size (memberEdges system) == 1
-      , getNN (sharedElectrons system) `elem` [2, 4, 6] =
+      , getNN (sharedElectrons system) `elem` [2, 4, 6, 8] =
           let edge = head (S.toAscList (memberEdges system))
           in if edge `M.member` acc
                then pure (M.insert edge (getNN (sharedElectrons system) `div` 2) acc)
@@ -918,6 +919,7 @@ bondSymbol :: Int -> String
 bondSymbol 1 = ""
 bondSymbol 2 = "="
 bondSymbol 3 = "#"
+bondSymbol 4 = "$"
 bondSymbol n = error ("Unsupported SMILES bond order: " ++ show n)
 
 atomIdValue :: AtomId -> Integer
@@ -932,6 +934,7 @@ bondKindFromChar :: Char -> Maybe BondKind
 bondKindFromChar '-' = Just BondSingle
 bondKindFromChar '=' = Just BondDouble
 bondKindFromChar '#' = Just BondTriple
+bondKindFromChar '$' = Just BondQuadruple
 bondKindFromChar ':' = Just BondAromatic
 bondKindFromChar _   = Nothing
 

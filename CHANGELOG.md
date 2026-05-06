@@ -8,7 +8,7 @@ This section records the current Haskell repo state targeted as "Version 2". The
 
 Version 2 is the point where the Haskell repo stops looking like a collection of molecule examples and becomes a coherent typed implementation with a stable CLI, a documented benchmark contract, a clear ownership boundary with the Python pipeline, and a reviewer-visible path from molecule parsing to aligned inference.
 
-The central idea remains the same: MolADT is a replacement molecular representation that keeps atoms, sigma bonds, bonding systems, shells, and orbitals explicit, instead of collapsing chemistry into a legacy graph-only abstraction. What changes in Version 2 is the amount of practical surface area built around that idea.
+The central idea remains the same: MolADT is a replacement molecular representation that keeps atoms, edges as bonding systems, shells, and orbitals explicit, instead of collapsing chemistry into a legacy graph-only abstraction. What changes in Version 2 is the amount of practical surface area built around that idea.
 
 ### Added
 

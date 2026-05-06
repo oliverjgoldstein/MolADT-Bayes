@@ -8,8 +8,9 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 import Chem.Dietz
-  ( AtomId(..)
-  , Edge(..)
+    ( AtomId(..)
+    , BondingSystem
+    , Edge(..)
   , NonNegative(..)
   , SystemId(..)
   , mkBondingSystem
@@ -24,15 +25,14 @@ import Chem.Molecule
   , SmilesAtomStereoClass(..)
   , SmilesBondStereo(..)
   , SmilesBondStereoDirection(..)
-  , SmilesStereochemistry(..)
-  , emptySmilesStereochemistry
-  , mkAngstrom
-  , withLocalBondsAsSystems
-  )
+    , SmilesStereochemistry(..)
+    , emptySmilesStereochemistry
+    , mkAngstrom
+    )
 import Constants (elementAttributes)
 
 benzene :: Molecule
-benzene = withLocalBondsAsSystems $ Molecule
+benzene = Molecule
   { atoms =
       M.fromList
         [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes C, coordinate = Coordinate (mkAngstrom (-1.2131)) (mkAngstrom (-0.6884)) (mkAngstrom 0.0), shells = defaultShells (elementAttributes C), formalCharge = 0 })
@@ -48,23 +48,20 @@ benzene = withLocalBondsAsSystems $ Molecule
         , (AtomId 11, Atom { atomID = AtomId 11, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 2.1394) (mkAngstrom (-1.2563)) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         , (AtomId 12, Atom { atomID = AtomId 12, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 2.1577) (mkAngstrom 1.2245) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
-  , localBonds =
-      S.fromList
-        [ Edge (AtomId 1) (AtomId 2)
-        , Edge (AtomId 1) (AtomId 6)
-        , Edge (AtomId 1) (AtomId 7)
-        , Edge (AtomId 2) (AtomId 3)
-        , Edge (AtomId 2) (AtomId 8)
-        , Edge (AtomId 3) (AtomId 4)
-        , Edge (AtomId 3) (AtomId 9)
-        , Edge (AtomId 4) (AtomId 5)
-        , Edge (AtomId 4) (AtomId 10)
-        , Edge (AtomId 5) (AtomId 6)
-        , Edge (AtomId 5) (AtomId 11)
-        , Edge (AtomId 6) (AtomId 12)
-        ]
   , systems =
-      [ (SystemId 1, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 2), Edge (AtomId 1) (AtomId 6), Edge (AtomId 2) (AtomId 3), Edge (AtomId 3) (AtomId 4), Edge (AtomId 4) (AtomId 5), Edge (AtomId 5) (AtomId 6)]) (Just "pi_ring"))
+      [ singleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))
+      , singleCovalentSystem 2 (Edge (AtomId 1) (AtomId 6))
+      , singleCovalentSystem 3 (Edge (AtomId 1) (AtomId 7))
+      , singleCovalentSystem 4 (Edge (AtomId 2) (AtomId 3))
+      , singleCovalentSystem 5 (Edge (AtomId 2) (AtomId 8))
+      , singleCovalentSystem 6 (Edge (AtomId 3) (AtomId 4))
+      , singleCovalentSystem 7 (Edge (AtomId 3) (AtomId 9))
+      , singleCovalentSystem 8 (Edge (AtomId 4) (AtomId 5))
+      , singleCovalentSystem 9 (Edge (AtomId 4) (AtomId 10))
+      , singleCovalentSystem 10 (Edge (AtomId 5) (AtomId 6))
+      , singleCovalentSystem 11 (Edge (AtomId 5) (AtomId 11))
+      , singleCovalentSystem 12 (Edge (AtomId 6) (AtomId 12))
+      , (SystemId 13, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 2), Edge (AtomId 1) (AtomId 6), Edge (AtomId 2) (AtomId 3), Edge (AtomId 3) (AtomId 4), Edge (AtomId 4) (AtomId 5), Edge (AtomId 5) (AtomId 6)]) (Just "pi_ring"))
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
@@ -72,3 +69,7 @@ benzene = withLocalBondsAsSystems $ Molecule
 
 benzenePretty :: Molecule
 benzenePretty = benzene
+
+singleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
+singleCovalentSystem systemId edge =
+  (SystemId systemId, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)

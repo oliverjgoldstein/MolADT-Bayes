@@ -39,7 +39,6 @@ moleculeToValue molecule =
             ]
         | (atomId, atom) <- M.toAscList (atoms molecule)
         ]
-    , "local_bonds" .= map edgeValue (S.toAscList (localBonds molecule))
     , "systems" .=
         [ A.object
             [ "system_id" .= systemIdValue systemId
@@ -274,22 +273,16 @@ parseMoleculeValue = A.withObject "Molecule" $ \obj -> do
   let atomMap = M.fromList atomEntries
   when (length atomEntries /= M.size atomMap) $
     fail "Duplicate atom_id entries in molecule atoms"
-  localBondValues <- obj .:? "local_bonds" .!= [] :: Parser [A.Value]
-  localBondList <- mapM parseEdgeValue localBondValues
   systemValues <- obj .: "systems" :: Parser [A.Value]
   systemList <- mapM parseSystemEntryValue systemValues
-  let systemEdges = S.unions [memberEdges system | (_, system) <- systemList]
-      legacyLocalBonds = S.fromList localBondList `S.difference` systemEdges
   smilesStereoValue <- obj .:? "smiles_stereochemistry" :: Parser (Maybe A.Value)
   smilesStereo <- maybe (pure emptySmilesStereochemistry) parseSmilesStereochemistryValue smilesStereoValue
   pure $
-    withLocalBondsAsSystems
-      (Molecule
-         { atoms = atomMap
-         , localBonds = legacyLocalBonds
-         , systems = systemList
-         , smilesStereochemistry = smilesStereo
-         })
+    Molecule
+      { atoms = atomMap
+      , systems = systemList
+      , smilesStereochemistry = smilesStereo
+      }
 
 parseAtomEntryValue :: A.Value -> Parser (AtomId, Atom)
 parseAtomEntryValue = A.withObject "AtomEntry" $ \obj -> do

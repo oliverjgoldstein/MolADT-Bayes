@@ -70,6 +70,26 @@ v3000Ammonium = unlines
   , "$$$$"
   ]
 
+v3000Quadruple :: String
+v3000Quadruple = unlines
+  [ "quadruple"
+  , "MolADT"
+  , "generated"
+  , "  0  0  0  0  0  0            999 V3000"
+  , "M  V30 BEGIN CTAB"
+  , "M  V30 COUNTS 2 1 0 0 0"
+  , "M  V30 BEGIN ATOM"
+  , "M  V30 1 C 0.0000 0.0000 0.0000 0"
+  , "M  V30 2 C 1.2000 0.0000 0.0000 0"
+  , "M  V30 END ATOM"
+  , "M  V30 BEGIN BOND"
+  , "M  V30 1 4 1 2"
+  , "M  V30 END BOND"
+  , "M  V30 END CTAB"
+  , "M  END"
+  , "$$$$"
+  ]
+
 -- | Run the Hspec suite defined in 'spec'.
 main :: IO ()
 main = hspec spec
@@ -88,7 +108,7 @@ spec = do
             Left err -> expectationFailure (errorBundlePretty err)
             Right mol' -> do
               M.size (atoms mol') `shouldBe` M.size (atoms mol)
-              localBonds mol' `shouldBe` localBonds mol
+              moleculeEdges mol' `shouldBe` moleculeEdges mol
 
     it "detects one pi bonding system in benzene" $ do
       parsed <- readSDF "molecules/benzene.sdf"
@@ -104,13 +124,19 @@ spec = do
         Left err -> expectationFailure (errorBundlePretty err)
         Right mol -> do
           M.size (atoms mol) `shouldBe` 3
-          S.size (localBonds mol) `shouldBe` 2
+          S.size (moleculeEdges mol) `shouldBe` 2
 
     it "reads V3000 CHG tokens into formal charges" $
       case parseSDF v3000Ammonium of
         Left err -> expectationFailure (errorBundlePretty err)
         Right mol ->
           fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
+
+    it "maps non-aromatic SDF bond type 4 to an eight-electron quadruple covalent system" $
+      case parseSDF v3000Quadruple of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol ->
+          countUnnamedEdgeSystems 8 mol `shouldBe` 1
 
     it "parses multiple SDF records from one payload" $
       case parseSDFRecords (v3000Water ++ v3000Ammonium) of
@@ -127,7 +153,7 @@ spec = do
           Right mol -> do
             countSymbol C mol `shouldBe` 6
             countSymbol H mol `shouldBe` 6
-            S.size (localBonds mol) `shouldBe` 12
+            S.size (moleculeEdges mol) `shouldBe` 12
             length (systems mol) `shouldBe` 13
             countUnnamedEdgeSystems 2 mol `shouldBe` 12
             countTag (Just "pi_ring") mol `shouldBe` 1
@@ -138,13 +164,13 @@ spec = do
         Right methaneMol -> do
           countSymbol C methaneMol `shouldBe` 1
           countSymbol H methaneMol `shouldBe` 4
-          S.size (localBonds methaneMol) `shouldBe` 4
+          S.size (moleculeEdges methaneMol) `shouldBe` 4
       case parseSMILES "O" of
         Left err -> expectationFailure err
         Right waterMol -> do
           countSymbol O waterMol `shouldBe` 1
           countSymbol H waterMol `shouldBe` 2
-          S.size (localBonds waterMol) `shouldBe` 2
+          S.size (moleculeEdges waterMol) `shouldBe` 2
 
     it "does not add extra implicit hydrogens to bracket atoms" $ do
       case parseSMILES "[O]" of
@@ -152,7 +178,7 @@ spec = do
         Right radicalOxygen -> do
           countSymbol O radicalOxygen `shouldBe` 1
           countSymbol H radicalOxygen `shouldBe` 0
-          S.size (localBonds radicalOxygen) `shouldBe` 0
+          S.size (moleculeEdges radicalOxygen) `shouldBe` 0
 
     it "renders water as bracketed SMILES and parses it back" $ do
       case moleculeToSMILES water of
@@ -163,7 +189,7 @@ spec = do
             Left err -> expectationFailure err
             Right mol -> do
               M.size (atoms mol) `shouldBe` 3
-              S.size (localBonds mol) `shouldBe` 2
+              S.size (moleculeEdges mol) `shouldBe` 2
 
     it "renders methane as bracketed SMILES and parses it back" $ do
       case moleculeToSMILES methane of
@@ -174,7 +200,7 @@ spec = do
             Left err -> expectationFailure err
             Right mol -> do
               M.size (atoms mol) `shouldBe` 5
-              S.size (localBonds mol) `shouldBe` 4
+              S.size (moleculeEdges mol) `shouldBe` 4
 
     it "renders benzene as a deterministic Kekule string and preserves localized double bonds on parse-back" $ do
       parsed <- readSDF "molecules/benzene.sdf"
@@ -190,7 +216,7 @@ spec = do
                   Right mol' -> do
                     countSymbol C mol' `shouldBe` 6
                     countSymbol H mol' `shouldBe` 6
-                    S.size (localBonds mol') `shouldBe` 12
+                    S.size (moleculeEdges mol') `shouldBe` 12
                     length (systems mol') `shouldBe` 12
                     countUnnamedEdgeSystems 2 mol' `shouldBe` 9
                     countUnnamedEdgeSystems 4 mol' `shouldBe` 3
@@ -223,7 +249,7 @@ spec = do
             Left err -> expectationFailure err
             Right mol' -> do
               atoms mol' `shouldBe` atoms mol
-              localBonds mol' `shouldBe` localBonds mol
+              moleculeEdges mol' `shouldBe` moleculeEdges mol
               systems mol' `shouldBe` systems mol
               smilesStereochemistry mol' `shouldBe` smilesStereochemistry mol
 
@@ -264,7 +290,7 @@ spec = do
           countSymbol H mol `shouldBe` 19
           countSymbol N mol `shouldBe` 1
           countSymbol O mol `shouldBe` 3
-          S.size (localBonds mol) `shouldBe` 44
+          S.size (moleculeEdges mol) `shouldBe` 44
           length (systems mol) `shouldBe` 44
           countUnnamedEdgeSystems 2 mol `shouldBe` 40
           countUnnamedEdgeSystems 4 mol `shouldBe` 4
@@ -278,6 +304,16 @@ spec = do
               , (AtomId 21, StereoTetrahedral, 1, "@")
               , (AtomId 23, StereoTetrahedral, 1, "@")
               ]
+
+    it "parses and renders quadruple covalent SMILES bonds" $ do
+      case parseSMILES "C$C" of
+        Left err -> expectationFailure err
+        Right mol -> do
+          countUnnamedEdgeSystems 8 mol `shouldBe` 1
+          prettyPrintMolecule mol `shouldContain` "quadruple covalent"
+          case moleculeToSMILES mol of
+            Left err -> expectationFailure err
+            Right smilesText -> smilesText `shouldContain` "$"
 
     it "parses a real ZINC entry even where the current validator is still too strict" $ do
       case parseSMILES "CC1(C)CN(C(=O)Nc2cc3ccccc3nn2)C[C@@]2(CCOC2)O1" of
@@ -326,9 +362,9 @@ spec = do
       case validateMolecule morphinePretty of
         Left err -> expectationFailure err
         Right mol -> do
-          S.size (localBonds mol) `shouldBe` 25
+          S.size (moleculeEdges mol) `shouldBe` 25
           map (tag . snd) (take 2 (systems mol)) `shouldBe` [Just "alkene_bridge", Just "phenyl_pi_ring"]
-          countUnnamedEdgeSystems 2 mol `shouldBe` 24
+          countUnnamedEdgeSystems 2 mol `shouldBe` 25
           map
             (\item -> (stereoCenter item, stereoClass item, stereoConfiguration item, stereoToken item))
             (atomStereoAnnotations (smilesStereochemistry mol))
@@ -345,7 +381,7 @@ moleculeToSDF :: Molecule -> String
 moleculeToSDF m = unlines $ header ++ atomLines ++ bondLines ++ ["M  END"]
   where
     nAtoms = M.size (atoms m)
-    nBonds = S.size (localBonds m)
+    nBonds = S.size (moleculeEdges m)
     header = ["", "", "", countLine]
     countLine = unwords [show nAtoms, show nBonds, "0 0 0 0 0 0 0 0 0 0 0 0"]
     atomLines = map formatAtom (map snd (M.toAscList (atoms m)))
@@ -353,7 +389,7 @@ moleculeToSDF m = unlines $ header ++ atomLines ++ bondLines ++ ["M  END"]
       let Coordinate x y z = coordinate a
           sym = show (symbol (attributes a))
       in unwords [show (unAngstrom x), show (unAngstrom y), show (unAngstrom z), sym, "0"]
-    bondLines = map formatBond (S.toList (localBonds m))
+    bondLines = map formatBond (S.toList (moleculeEdges m))
     formatBond (Edge (AtomId i) (AtomId j)) = unwords [show i, show j, "1"]
 
 countSymbol :: AtomicSymbol -> Molecule -> Int

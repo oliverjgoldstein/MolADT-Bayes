@@ -713,7 +713,7 @@ baseMoladtDescriptors molecule =
     , ("multicentre_system_count", fromIntegral (length [() | system <- legacySystems, S.size (memberEdges system) > 1]))
     , ("pi_ring_system_count", aromaticRingCount molecule)
     , ("zero_electron_system_count", fromIntegral (length [() | system <- legacySystems, getNN (sharedElectrons system) == 0]))
-    , ("sigma_edge_count", fromIntegral (S.size (localBonds molecule)))
+    , ("sigma_edge_count", fromIntegral (S.size (moleculeEdges molecule)))
     , ("effective_bond_order_sum", sum edgeOrders)
     , ("effective_bond_order_mean", if null edgeOrders then 0.0 else mean edgeOrders)
     , ("effective_bond_order_max", if null edgeOrders then 0.0 else maximum edgeOrders)
@@ -949,7 +949,7 @@ legacyBondingSystems molecule =
 conventionalOneEdgeSystem :: BondingSystem -> Bool
 conventionalOneEdgeSystem system =
   S.size (memberEdges system) == 1
-    && getNN (sharedElectrons system) `elem` [2, 4, 6]
+    && getNN (sharedElectrons system) `elem` [2, 4, 6, 8]
 
 sigmaSingletonSystem :: BondingSystem -> Bool
 sigmaSingletonSystem system =
@@ -958,7 +958,7 @@ sigmaSingletonSystem system =
 
 legacySystemSharedElectrons :: BondingSystem -> Double
 legacySystemSharedElectrons system =
-  if conventionalOneEdgeSystem system && getNN (sharedElectrons system) `elem` [4, 6]
+  if conventionalOneEdgeSystem system && getNN (sharedElectrons system) `elem` [4, 6, 8]
     then fromIntegral (getNN (sharedElectrons system) - 2)
     else fromIntegral (getNN (sharedElectrons system))
 
@@ -997,10 +997,10 @@ addTerminalAtom molecule gen =
           newId = freshAtomId moleculeWithRoom
           newAtomValue = newAtom newId newSymbol parentId moleculeWithRoom
           proposal =
-            moleculeWithRoom
-              { atoms = M.insert newId newAtomValue (atoms moleculeWithRoom)
-              , localBonds = S.insert (mkEdge parentId newId) (localBonds moleculeWithRoom)
-              }
+            addSigma parentId newId $
+              moleculeWithRoom
+                { atoms = M.insert newId newAtomValue (atoms moleculeWithRoom)
+                }
       in (tryValidCandidate proposal, gen2)
   where
     parents =
@@ -1020,8 +1020,7 @@ addSigmaEdge molecule gen =
           (pair, gen1) = chooseOne preferred gen
           (left, right) = pair
           proposal0 = makeRoomAt right (makeRoomAt left molecule)
-          proposal =
-            proposal0 { localBonds = S.insert (mkEdge left right) (localBonds proposal0) }
+          proposal = addSigma left right proposal0
       in (tryValidCandidate proposal, gen1)
   where
     heavyIds =
@@ -1036,7 +1035,7 @@ addSigmaEdge molecule gen =
       | (index, left) <- zip [0 :: Int ..] heavyIds
       , right <- drop (index + 1) heavyIds
       , let edge = mkEdge left right
-      , not (edge `S.member` localBonds molecule)
+      , not (edge `S.member` moleculeEdges molecule)
       , not (hasLocalizedSingletonSystem molecule edge)
       , let pathLength = shortestSigmaPathLength molecule left right
       , maybe False (\value -> value >= 4 && value <= 6) pathLength
@@ -1110,7 +1109,7 @@ validateCandidate molecule = do
   unlessEither (isConnected valid) "Molecule is disconnected"
   ensureSupportedSymbols valid
   ensureNeutralFormalCharges valid
-  ensureNoHydrogenHydrogenLocalBonds valid
+  ensureNoHydrogenHydrogenEdges valid
   ensureConservativeGeneratorValence valid
   ensureClosedValenceShells valid
   ensureTerminalAtomRules valid
@@ -1130,15 +1129,15 @@ ensureSupportedSymbols molecule =
       , not (symbolOf atom `elem` supportedSymbols)
       ]
 
-ensureNoHydrogenHydrogenLocalBonds :: Molecule -> Either String ()
-ensureNoHydrogenHydrogenLocalBonds molecule =
+ensureNoHydrogenHydrogenEdges :: Molecule -> Either String ()
+ensureNoHydrogenHydrogenEdges molecule =
   case badEdges of
     [] -> Right ()
-    _  -> Left "Generated molecules may not contain H-H local bonds"
+    _  -> Left "Generated molecules may not contain H-H edges"
   where
     badEdges =
       [ edge
-      | edge@(Edge left right) <- S.toList (localBonds molecule)
+      | edge@(Edge left right) <- S.toList (moleculeEdges molecule)
       , symbolOf (atoms molecule M.! left) == H
       , symbolOf (atoms molecule M.! right) == H
       ]
@@ -1236,9 +1235,9 @@ ensureSoundBondingSystems molecule =
 ensurePlausibleFreeSolvGeometry :: Molecule -> Either String ()
 ensurePlausibleFreeSolvGeometry molecule =
   ensureNoCoordinateCollisions molecule
-    >> ensureLocalBondLengths molecule
+    >> ensureBondLengths molecule
     >> ensureNonbondedClearance molecule
-    >> ensureMinimumLocalAngles molecule
+    >> ensureMinimumBondAngles molecule
 
 ensureNoCoordinateCollisions :: Molecule -> Either String ()
 ensureNoCoordinateCollisions molecule =
@@ -1260,8 +1259,8 @@ ensureNoCoordinateCollisions molecule =
       , edgeDistance molecule (mkEdge leftId rightId) < minAtomDistanceAngstrom
       ]
 
-ensureLocalBondLengths :: Molecule -> Either String ()
-ensureLocalBondLengths molecule =
+ensureBondLengths :: Molecule -> Either String ()
+ensureBondLengths molecule =
   case badEdges of
     [] -> Right ()
     (edge@(Edge left right), actual, expected) : _ ->
@@ -1278,9 +1277,9 @@ ensureLocalBondLengths molecule =
   where
     badEdges =
       [ (edge, actual, expected)
-      | edge <- S.toList (localBonds molecule)
+      | edge <- S.toList (moleculeEdges molecule)
       , let actual = edgeDistance molecule edge
-            expected = expectedLocalBondLength molecule edge
+            expected = expectedBondLength molecule edge
       , actual < minBondLengthRatio * expected || actual > maxBondLengthRatio * expected
       ]
 
@@ -1315,8 +1314,8 @@ ensureNonbondedClearance molecule =
       , actual < threshold
       ]
 
-ensureMinimumLocalAngles :: Molecule -> Either String ()
-ensureMinimumLocalAngles molecule =
+ensureMinimumBondAngles :: Molecule -> Either String ()
+ensureMinimumBondAngles molecule =
   case badAngles of
     [] -> Right ()
     (left, center, right, angleValue) : _ ->
@@ -1337,7 +1336,7 @@ ensureMinimumLocalAngles molecule =
       , symbolOf atom /= H
       , (left, right) <- neighborPairs (sort (neighborsSigma molecule center))
       , let angleValue = angleBetweenAtoms molecule left center right
-      , angleValue < minLocalBondAngleDegrees
+      , angleValue < minBondAngleDegrees
       ]
 
 unlessEither :: Bool -> String -> Either String ()
@@ -1346,39 +1345,45 @@ unlessEither False err = Left err
 
 seedMolecule :: SeedMoleculeName -> Molecule
 seedMolecule SeedWater =
-  withLocalBondsAsSystems
-    (Molecule
-       { atoms =
-           M.fromList
-             [ (AtomId 1, seedAtom 1 O 0.00 0.00 0.00)
-             , (AtomId 2, seedAtom 2 H 0.96 0.00 0.00)
-             , (AtomId 3, seedAtom 3 H (-0.32) 0.90 0.00)
-             ]
-       , localBonds = S.fromList [mkEdge (AtomId 1) (AtomId 2), mkEdge (AtomId 1) (AtomId 3)]
-       , systems = []
-       , smilesStereochemistry = emptySmilesStereochemistry
-       })
+  Molecule
+    { atoms =
+        M.fromList
+          [ (AtomId 1, seedAtom 1 O 0.00 0.00 0.00)
+          , (AtomId 2, seedAtom 2 H 0.96 0.00 0.00)
+          , (AtomId 3, seedAtom 3 H (-0.32) 0.90 0.00)
+          ]
+    , systems =
+        singleCovalentSystems 1
+          [ mkEdge (AtomId 1) (AtomId 2)
+          , mkEdge (AtomId 1) (AtomId 3)
+          ]
+    , smilesStereochemistry = emptySmilesStereochemistry
+    }
 seedMolecule SeedMethane =
-  withLocalBondsAsSystems
-    (Molecule
-       { atoms =
-           M.fromList
-             [ (AtomId 1, seedAtom 1 C 0.00 0.00 0.00)
-             , (AtomId 2, seedAtom 2 H 0.63 0.63 0.63)
-             , (AtomId 3, seedAtom 3 H (-0.63) (-0.63) 0.63)
-             , (AtomId 4, seedAtom 4 H (-0.63) 0.63 (-0.63))
-             , (AtomId 5, seedAtom 5 H 0.63 (-0.63) (-0.63))
-             ]
-       , localBonds =
-           S.fromList
-             [ mkEdge (AtomId 1) (AtomId 2)
-             , mkEdge (AtomId 1) (AtomId 3)
-             , mkEdge (AtomId 1) (AtomId 4)
-             , mkEdge (AtomId 1) (AtomId 5)
-             ]
-       , systems = []
-       , smilesStereochemistry = emptySmilesStereochemistry
-       })
+  Molecule
+    { atoms =
+        M.fromList
+          [ (AtomId 1, seedAtom 1 C 0.00 0.00 0.00)
+          , (AtomId 2, seedAtom 2 H 0.63 0.63 0.63)
+          , (AtomId 3, seedAtom 3 H (-0.63) (-0.63) 0.63)
+          , (AtomId 4, seedAtom 4 H (-0.63) 0.63 (-0.63))
+          , (AtomId 5, seedAtom 5 H 0.63 (-0.63) (-0.63))
+          ]
+    , systems =
+        singleCovalentSystems 1
+          [ mkEdge (AtomId 1) (AtomId 2)
+          , mkEdge (AtomId 1) (AtomId 3)
+          , mkEdge (AtomId 1) (AtomId 4)
+          , mkEdge (AtomId 1) (AtomId 5)
+          ]
+    , smilesStereochemistry = emptySmilesStereochemistry
+    }
+
+singleCovalentSystems :: Int -> [Edge] -> [(SystemId, BondingSystem)]
+singleCovalentSystems start edges =
+  [ (SystemId (start + offset), mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)
+  | (offset, edge) <- zip [0 ..] edges
+  ]
 
 seedAtom :: Integer -> AtomicSymbol -> Double -> Double -> Double -> Atom
 seedAtom atomNumber atomSymbol xValue yValue zValue =
@@ -1547,11 +1552,9 @@ completeTerminalHydrogens molecule =
                (\(nextValue, acc) _ ->
                   let hydrogenId = AtomId nextValue
                       hydrogen = newAtom hydrogenId H atomId acc
+                      withHydrogen = acc { atoms = M.insert hydrogenId hydrogen (atoms acc) }
                   in ( nextValue + 1
-                     , acc
-                         { atoms = M.insert hydrogenId hydrogen (atoms acc)
-                         , localBonds = S.insert (mkEdge atomId hydrogenId) (localBonds acc)
-                         }
+                     , addSigma atomId hydrogenId withHydrogen
                      )
                )
                (nextIdValue, current)
@@ -1568,11 +1571,6 @@ canonicalizeAtomIds molecule =
               [ (newId, atom { atomID = newId })
               | (oldId, newId) <- M.toAscList idMap
               , let atom = atoms molecule M.! oldId
-              ]
-        , localBonds =
-            S.fromList
-              [ mkEdge (translate left) (translate right)
-              | Edge left right <- S.toList (localBonds molecule)
               ]
         , systems =
             [ ( SystemId index
@@ -1594,7 +1592,6 @@ removeAtom :: AtomId -> Molecule -> Molecule
 removeAtom atomId molecule =
   molecule
     { atoms = M.delete atomId (atoms molecule)
-    , localBonds = S.filter (not . edgeTouches atomId) (localBonds molecule)
     , systems =
         [ (systemId, system)
         | (systemId, system) <- systems molecule
@@ -1649,7 +1646,7 @@ detectCarbonSixRings :: Molecule -> [S.Set Edge]
 detectCarbonSixRings molecule =
   sortOn ringSortKey (S.toList discovered)
   where
-    adjacency = adjacencyFromEdges (localBonds molecule)
+    adjacency = adjacencyFromEdges (moleculeEdges molecule)
     starts = M.keys adjacency
     discovered =
       foldl'
@@ -1696,7 +1693,7 @@ isValidPiRing molecule system =
     && S.size (memberEdges system) == 6
     && S.size ringAtoms == 6
     && all (\atomId -> M.member atomId (atoms molecule) && symbolOf (atoms molecule M.! atomId) == C) (S.toList ringAtoms)
-    && all (`S.member` localBonds molecule) (S.toList (memberEdges system))
+    && all (`S.member` moleculeEdges molecule) (S.toList (memberEdges system))
     && all (== 2) (M.elems ringDegree)
   where
     ringAtoms = S.unions [S.fromList [left, right] | Edge left right <- S.toList (memberEdges system)]
@@ -1754,8 +1751,7 @@ walk seen (current : rest) adjacency
         adjacency
 
 allEdges :: Molecule -> S.Set Edge
-allEdges molecule =
-  S.unions (localBonds molecule : [memberEdges system | (_, system) <- systems molecule])
+allEdges = moleculeEdges
 
 adjacencyFromEdges :: S.Set Edge -> M.Map AtomId [AtomId]
 adjacencyFromEdges edgeSet =
@@ -1817,9 +1813,6 @@ candidateHaskellSource rank candidate result =
     , "molecule = either error id (validateMolecule (Molecule"
     , "  { atoms = M.fromList"
     , "      [ " ++ intercalate "\n      , " (atomSourceLines (candidateMolecule candidate))
-    , "      ]"
-    , "  , localBonds = S.fromList"
-    , "      [ " ++ intercalate "\n      , " (edgeSourceLines (localBonds (candidateMolecule candidate)))
     , "      ]"
     , "  , systems ="
     , "      [ " ++ intercalate "\n      , " (systemSourceLines (candidateMolecule candidate))
@@ -1969,7 +1962,7 @@ renderCandidate rank candidate target =
   , "  score: " ++ printf "%.3f" (candidateScore candidate)
   , "  atoms: " ++ show (M.size (atoms molecule))
   , "  heavy atoms: " ++ show (heavyAtomCount molecule)
-  , "  local bonds: " ++ show (S.size (localBonds molecule))
+  , "  edges: " ++ show (S.size (moleculeEdges molecule))
   , "  Dietz bonding systems: " ++ show (length (systems molecule))
   , "  formula: " ++ molecularFormula molecule
   , formatDietzMolecule molecule
@@ -1984,18 +1977,9 @@ formatDietzMolecule molecule =
       ++ [ "    " ++ showAtomId atomId ++ " " ++ show (symbolOf atom)
          | (atomId, atom) <- M.toAscList (atoms molecule)
          ]
-      ++ [ "  local_bonds:" ]
-      ++ bondLines
       ++ [ "  bonding_systems:" ]
       ++ systemLines
   where
-    bondLines =
-      case S.toList (localBonds molecule) of
-        [] -> ["    (none)"]
-        edges ->
-          [ "    {" ++ showAtomId left ++ "," ++ showAtomId right ++ "}"
-          | Edge left right <- edges
-          ]
     systemLines =
       case systems molecule of
         [] -> ["    (none)"]
@@ -2317,14 +2301,14 @@ ringEdgeFraction molecule
         / fromIntegral (S.size uniqueEdges)
   where
     uniqueEdges = allEdges molecule
-    adjacency = adjacencyFromEdges (localBonds molecule)
+    adjacency = adjacencyFromEdges (moleculeEdges molecule)
 
 rotatableBondCount :: Molecule -> Double
 rotatableBondCount molecule =
   fromIntegral
     ( length
         [ ()
-        | edge@(Edge left right) <- S.toList (localBonds molecule)
+        | edge@(Edge left right) <- S.toList (moleculeEdges molecule)
         , isHeavy left
         , isHeavy right
         , heavyDegree left > 1
@@ -2334,7 +2318,7 @@ rotatableBondCount molecule =
         ]
     )
   where
-    adjacency = adjacencyFromEdges (localBonds molecule)
+    adjacency = adjacencyFromEdges (moleculeEdges molecule)
     isHeavy atomId = symbolOf (atoms molecule M.! atomId) /= H
     heavyDegree atomId =
       length [neighbor | neighbor <- M.findWithDefault [] atomId adjacency, isHeavy neighbor]
@@ -2424,8 +2408,8 @@ maxBondLengthRatio = 1.40
 nonbondedClearanceFraction :: Double
 nonbondedClearanceFraction = 0.62
 
-minLocalBondAngleDegrees :: Double
-minLocalBondAngleDegrees = 90.0
+minBondAngleDegrees :: Double
+minBondAngleDegrees = 90.0
 
 piRingCarbonCarbonBondLength :: Double
 piRingCarbonCarbonBondLength = 1.40
@@ -2485,8 +2469,8 @@ vdwRadius F = 1.47
 vdwRadius Cl = 1.75
 vdwRadius symbolValue = 1.70 + 0.03 * fromIntegral (symbolIndex symbolValue)
 
-expectedLocalBondLength :: Molecule -> Edge -> Double
-expectedLocalBondLength molecule edge@(Edge left right)
+expectedBondLength :: Molecule -> Edge -> Double
+expectedBondLength molecule edge@(Edge left right)
   | isPiRingCarbonEdge molecule edge = piRingCarbonCarbonBondLength
   | otherwise =
       preferredSigmaBondLength
@@ -2526,22 +2510,22 @@ angleBetweenAtoms molecule left center right =
          in acos cosineValue * 180.0 / pi
 
 isGeometricallyLinkable :: Molecule -> Edge -> Bool
-isGeometricallyLinkable molecule edge =
+isGeometricallyLinkable molecule edge@(Edge left right) =
   let actual = edgeDistance molecule edge
-      expected = expectedLocalBondLength molecule edge
-      proposed = molecule { localBonds = S.insert edge (localBonds molecule) }
+      expected = expectedBondLength molecule edge
+      proposed = addSigma left right molecule
   in actual >= minBondLengthRatio * expected
        && actual <= maxBondLengthRatio * expected
-       && wouldKeepLocalAngles proposed edge
+       && wouldKeepBondAngles proposed edge
 
-wouldKeepLocalAngles :: Molecule -> Edge -> Bool
-wouldKeepLocalAngles molecule (Edge left right) =
-  all (localAnglesOkay molecule) [left, right]
+wouldKeepBondAngles :: Molecule -> Edge -> Bool
+wouldKeepBondAngles molecule (Edge left right) =
+  all (bondAnglesOkay molecule) [left, right]
 
-localAnglesOkay :: Molecule -> AtomId -> Bool
-localAnglesOkay molecule atomId =
+bondAnglesOkay :: Molecule -> AtomId -> Bool
+bondAnglesOkay molecule atomId =
   all
-    (\(left, right) -> angleBetweenAtoms molecule left atomId right >= minLocalBondAngleDegrees)
+    (\(left, right) -> angleBetweenAtoms molecule left atomId right >= minBondAngleDegrees)
     (neighborPairs (sort (neighborsSigma molecule atomId)))
 
 availableValence :: Molecule -> AtomId -> Double
@@ -2568,7 +2552,7 @@ moleculeKey :: Molecule -> String
 moleculeKey molecule =
   show
     ( [ (atomIdInteger atomId, show (symbolOf atom)) | (atomId, atom) <- M.toAscList (atoms molecule) ]
-    , [ (atomIdInteger left, atomIdInteger right) | Edge left right <- S.toList (localBonds molecule) ]
+    , [ (atomIdInteger left, atomIdInteger right) | Edge left right <- S.toList (moleculeEdges molecule) ]
     , [ ( getNN (sharedElectrons system)
         , ringSortKey (memberEdges system)
         , tag system

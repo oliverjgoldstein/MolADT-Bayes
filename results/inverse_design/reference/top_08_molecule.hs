@@ -53,26 +53,6 @@ molecule = either error id (validateMolecule (Molecule
       , (AtomId 18, Atom { atomID = AtomId 18, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-1.54)) (mkAngstrom 0.7707463914933368) (mkAngstrom 0.7707463914933368), shells = defaultShells (elementAttributes H), formalCharge = 0 })
       , (AtomId 19, Atom { atomID = AtomId 19, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-1.54)) (mkAngstrom 0.0) (mkAngstrom (-1.09)), shells = defaultShells (elementAttributes H), formalCharge = 0 })
       ]
-  , localBonds = S.fromList
-      [ Edge (AtomId 1) (AtomId 2)
-      , Edge (AtomId 1) (AtomId 3)
-      , Edge (AtomId 1) (AtomId 9)
-      , Edge (AtomId 1) (AtomId 10)
-      , Edge (AtomId 2) (AtomId 4)
-      , Edge (AtomId 2) (AtomId 11)
-      , Edge (AtomId 2) (AtomId 12)
-      , Edge (AtomId 3) (AtomId 7)
-      , Edge (AtomId 4) (AtomId 5)
-      , Edge (AtomId 4) (AtomId 8)
-      , Edge (AtomId 5) (AtomId 6)
-      , Edge (AtomId 7) (AtomId 13)
-      , Edge (AtomId 9) (AtomId 14)
-      , Edge (AtomId 9) (AtomId 15)
-      , Edge (AtomId 9) (AtomId 16)
-      , Edge (AtomId 10) (AtomId 17)
-      , Edge (AtomId 10) (AtomId 18)
-      , Edge (AtomId 10) (AtomId 19)
-      ]
   , systems =
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3)]) Nothing)

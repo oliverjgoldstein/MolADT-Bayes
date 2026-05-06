@@ -37,8 +37,7 @@ moleculeViewerPayload title molecule =
     , "angles" .= anglePayloads molecule
     ]
   where
-    allEdges =
-      S.unions (localBonds molecule : map (memberEdges . snd) (allSystems molecule))
+    allEdges = moleculeEdges molecule
 
     atomPayload :: (AtomId, Atom) -> A.Value
     atomPayload (AtomId rawId, atom) =
@@ -71,10 +70,7 @@ moleculeViewerPayload title molecule =
         ]
       where
         edgeKind :: T.Text
-        edgeKind =
-          if edge `S.member` localBonds molecule
-            then "sigma"
-            else "system"
+        edgeKind = "system"
 
     systemPayload :: (SystemId, BondingSystem) -> A.Value
     systemPayload (SystemId rawId, bondingSystem) =
@@ -98,11 +94,12 @@ moleculeViewerPayload title molecule =
 
     covalentLabel :: BondingSystem -> Maybe String
     covalentLabel bondingSystem
-      | tag bondingSystem `notElem` [Nothing, Just "single", Just "double", Just "triple"] = Nothing
+      | tag bondingSystem `notElem` [Nothing, Just "single", Just "double", Just "triple", Just "quadruple"] = Nothing
       | S.size (memberEdges bondingSystem) /= 1 = Nothing
       | getNN (sharedElectrons bondingSystem) == 2 = Just "single covalent"
       | getNN (sharedElectrons bondingSystem) == 4 = Just "double covalent"
       | getNN (sharedElectrons bondingSystem) == 6 = Just "triple covalent"
+      | getNN (sharedElectrons bondingSystem) == 8 = Just "quadruple covalent"
       | otherwise = Nothing
 
     atomIdValue :: AtomId -> Integer
@@ -131,8 +128,7 @@ anglePayloads molecule =
   , Just angleValue <- [atomAngle molecule left center right]
   ]
   where
-    geometryEdges =
-      S.unions (localBonds molecule : [memberEdges system | (_, system) <- allSystems molecule])
+    geometryEdges = moleculeEdges molecule
     adjacency =
       M.map S.toAscList $
         S.foldl'
@@ -515,7 +511,7 @@ viewerHTML title payloadValue =
     , "    });"
     , "    const atomMap = new Map(atoms.map((atom) => [atom.id, atom]));"
     , "    const bondsByKey = new Map();"
-    , "    (raw.local_bonds || raw.bonds || []).forEach(function (edge) {"
+    , "    (raw.bonds || []).forEach(function (edge) {"
     , "      const a = idValue(edge.a);"
     , "      const b = idValue(edge.b);"
     , "      bondsByKey.set(edgeKey(a, b), { a: a, b: b, order: Number(edge.order || 1), kind: edge.kind || 'sigma', length: Number(edge.length || atomDistance(atomMap.get(a), atomMap.get(b))) });"
@@ -543,6 +539,14 @@ viewerHTML title payloadValue =
     , "        edges: edges"
     , "      };"
     , "    });"
+    , "    systems.forEach(function (system) {"
+    , "      const perEdge = system.edges.length ? system.sharedElectrons / (2 * system.edges.length) : 0;"
+    , "      system.edges.forEach(function (edge) {"
+    , "        const key = edgeKey(edge.a, edge.b);"
+    , "        const bond = bondsByKey.get(key);"
+    , "        if (bond) bond.order = (bond.order || 0) + perEdge;"
+    , "      });"
+    , "    });"
     , "    const bonds = Array.from(bondsByKey.values());"
     , "    return {"
     , "      format: 'moladt-viewer-v1',"
@@ -559,11 +563,12 @@ viewerHTML title payloadValue =
     , "    return display ? `#${id} ${display}` : `#${id}`;"
     , "  }"
     , "  function covalentLabel(tag, sharedElectrons, edges) {"
-    , "    if (tag && tag !== 'single' && tag !== 'double' && tag !== 'triple') return null;"
+    , "    if (tag && tag !== 'single' && tag !== 'double' && tag !== 'triple' && tag !== 'quadruple') return null;"
     , "    if (!edges || edges.length !== 1) return null;"
     , "    if (sharedElectrons === 2) return 'single covalent';"
     , "    if (sharedElectrons === 4) return 'double covalent';"
     , "    if (sharedElectrons === 6) return 'triple covalent';"
+    , "    if (sharedElectrons === 8) return 'quadruple covalent';"
     , "    return null;"
     , "  }"
     , "  function normalisePayload(raw) {"

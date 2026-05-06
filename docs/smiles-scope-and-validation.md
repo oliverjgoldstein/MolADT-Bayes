@@ -10,6 +10,7 @@ MolADT treats SMILES as a boundary format, not as the internal representation.
 - bracket atoms
 - simple branches
 - ring closures
+- single, double, triple, and quadruple bonds
 - aromatic benzene-style lowercase syntax
 - atom stereo annotations like `@` and `@@`
 - directional bond annotations like `/` and `\`

@@ -18,7 +18,7 @@ import           Chem.IO.SDF (readSDF)
 import           Chem.IO.MoleculeJSON (moleculeFromJSON, moleculeToJSON)
 import           Chem.IO.SMILES (moleculeToSMILES, parseSMILES)
 import           Chem.IO.SDFTiming (measureSdfTiming, renderTimingReport)
-import           Chem.Molecule (Molecule, atoms, localBonds, prettyPrintMolecule, systems)
+import           Chem.Molecule (Molecule, atoms, moleculeEdges, prettyPrintMolecule, systems)
 import           Chem.Validate (validateMolecule)
 import           ExampleMolecules.Diborane (diboranePretty)
 import           ExampleMolecules.Benzene (benzenePretty)
@@ -251,8 +251,8 @@ writeViewerAndMaybeOpen outputPath title molecule shouldOpen = do
     "Viewer molecule: "
       ++ show (length (atoms molecule))
       ++ " atoms, "
-      ++ show (length (localBonds molecule))
-      ++ " sigma bonds, "
+      ++ show (length (moleculeEdges molecule))
+      ++ " edges, "
       ++ show (length (systems molecule))
       ++ " bonding systems."
   putStrLn ("Viewer HTML: " ++ written)

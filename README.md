@@ -26,7 +26,7 @@ MolADT keeps the important structure explicit:
 
 - atoms with element data, coordinates, formal charge, shells, and orbitals
 - every edge represented as a Dietz bonding system
-- an edge index for traversal and legacy sigma-style code
+- an edge network derived from bonding-system member edges
 - delocalized and multicentre chemistry in the same bonding-system layer
 - SMILES stereochemistry annotations as their own typed layer
 - shared JSON serialization for Haskell and the sibling Python repo
@@ -45,18 +45,15 @@ The core Haskell value is deliberately small:
 ```haskell
 data Molecule = Molecule
   { atoms :: Map AtomId Atom
-  , localBonds :: Set Edge
   , systems :: [(SystemId, BondingSystem)]
   , smilesStereochemistry :: SmilesStereochemistry
   }
 ```
 
-`systems` is the canonical bonding layer. A conventional single, double, or
-triple bond is a one-edge `BondingSystem` with `2`, `4`, or `6` shared
-electrons. Pretty printers and viewers display these as `single covalent`,
-`double covalent`, or `triple covalent`. `localBonds` is kept as a derived edge
-index for graph traversal and older callers; `withLocalBondsAsSystems` lifts
-legacy edge-only molecules into explicit two-electron `single covalent` systems.
+`systems` is the canonical bonding layer. A conventional single, double,
+triple, or quadruple bond is a one-edge `BondingSystem` with `2`, `4`, `6`, or
+`8` shared electrons. Pretty printers and viewers display these as
+`single covalent`, `double covalent`, `triple covalent`, or `quadruple covalent`.
 Pretty printing derives display edges from the bonding systems and reports the
 total electrons shared over each edge. For benzene, a C-C edge is shown as
 `shared=3e` and `order=1.50`: `2e` from the one-edge `single covalent` system plus
@@ -66,8 +63,8 @@ Shells are optional on atoms, and `elementAttributes` now carries the default
 shell data used by simple constructors.
 
 Use [`sameMolecule`](docs/molecule-equality.md) when you want equality modulo
-container ordering, such as maps, edge sets, system lists, and annotation lists.
-It keeps atom and system identifiers meaningful.
+container ordering, such as maps, system lists, member-edge sets, and
+annotation lists. It keeps atom and system identifiers meaningful.
 
 The point is not to replace SMILES or SDF. The point is to parse them into a
 typed structure where the chemistry is available as data.
@@ -88,7 +85,7 @@ around the molecule without hiding the molecule fields.
 - **Better model inputs**: the Haskell benchmark consumer works from
   Python-exported MolADT feature matrices rather than raw notation.
 - **Editable structure**: inverse-design experiments can operate on atoms,
-  edge-index entries, hydrogens, and bonding systems as separate concepts.
+  hydrogens, and bonding systems as typed concepts.
 - **Inspectable outputs**: the standalone viewer shows atoms, every edge, and
   explicit electron-sharing systems from the same typed payload.
 - **Algebraic contracts**: rotations, atom relabelings, or other transforms can

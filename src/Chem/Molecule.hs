@@ -3,7 +3,6 @@
 
 -- | Molecule ADT built on Dietz constitution:
 --   - atoms      : Map AtomId Atom (element data, charge, coordinates)
---   - localBonds : derived edge index for traversal/legacy callers
 --   - systems    : Dietz bonding systems, including one-edge 2/4/6e bonds
 --   Distances/coordinates are stored in Angstroms.
 
@@ -21,10 +20,10 @@ module Chem.Molecule
   , emptySmilesStereochemistry
   , Molecule(..)
     -- * Helpers
-  , sameMolecule
-  , allSystems
-  , withLocalBondsAsSystems
-  , addSigma
+    , sameMolecule
+    , allSystems
+    , moleculeEdges
+    , addSigma
   , distanceAngstrom
   , neighborsSigma
   , edgeSystems
@@ -111,11 +110,10 @@ emptySmilesStereochemistry = SmilesStereochemistry [] []
 -- ===== Molecule (Dietz + \963) =====
 
 data Molecule = Molecule
-  { atoms      :: Map AtomId Atom             -- ^ V
-  , localBonds :: Set Edge                    -- ^ compatibility edge index
-  , systems    :: [(SystemId, BondingSystem)] -- ^ B (each system is (s, E))
-  , smilesStereochemistry :: SmilesStereochemistry
-  } deriving (Eq, Show, Read, Generic, NFData)
+    { atoms      :: Map AtomId Atom             -- ^ V
+    , systems    :: [(SystemId, BondingSystem)] -- ^ B (each system is (s, E))
+    , smilesStereochemistry :: SmilesStereochemistry
+    } deriving (Eq, Show, Read, Generic, NFData)
 
 -- ===== Small helpers =====
 
@@ -132,11 +130,10 @@ type CanonicalStereochemistry =
   )
 
 type CanonicalMolecule =
-  ( [(AtomId, Atom)]
-  , [(AtomId, AtomId)]
-  , [(SystemId, CanonicalBondingSystem)]
-  , CanonicalStereochemistry
-  )
+    ( [(AtomId, Atom)]
+    , [(SystemId, CanonicalBondingSystem)]
+    , CanonicalStereochemistry
+    )
 
 -- | Order-insensitive molecule equality for the MolADT containers.
 --
@@ -148,11 +145,10 @@ sameMolecule left right = canonicalMoleculeKey left == canonicalMoleculeKey righ
 
 canonicalMoleculeKey :: Molecule -> CanonicalMolecule
 canonicalMoleculeKey molecule =
-  ( M.toAscList (atoms molecule)
-  , canonicalEdges (localBonds molecule)
-  , sort [ (systemId, canonicalBondingSystem system)
-         | (systemId, system) <- allSystems molecule
-         ]
+    ( M.toAscList (atoms molecule)
+    , sort [ (systemId, canonicalBondingSystem system)
+           | (systemId, system) <- allSystems molecule
+           ]
   , canonicalStereochemistry (smilesStereochemistry molecule)
   )
 
@@ -195,42 +191,19 @@ canonicalStereochemistry stereo =
       ]
   )
 
--- | Bonding systems with legacy local edge-only input lifted to 2e singleton
--- systems. The explicit Dietz layer is the source of electron counts; the
--- local edge set is retained as a graph/index compatibility field.
 allSystems :: Molecule -> [(SystemId, BondingSystem)]
-allSystems molecule = sortOn fst (systems molecule ++ missingSystems)
-  where
-    coveredConventionalEdges =
-      S.fromList
-        [ edge
-        | (_, system) <- systems molecule
-        , S.size (memberEdges system) == 1
-        , getNN (sharedElectrons system) `elem` [2, 4, 6]
-        , edge <- S.toList (memberEdges system)
-        ]
-    missingEdges = S.toAscList (localBonds molecule `S.difference` coveredConventionalEdges)
-    nextId = maybe 1 ((+ 1) . systemIdInt . maximum) (safeNonEmpty [ sid | (sid, _) <- systems molecule ])
-    missingSystems =
-      [ (SystemId (nextId + offset), mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)
-      | (offset, edge) <- zip [0 ..] missingEdges
-      ]
+allSystems = sortOn fst . systems
 
-withLocalBondsAsSystems :: Molecule -> Molecule
-withLocalBondsAsSystems molecule =
-  molecule
-    { localBonds = S.unions (localBonds molecule : [ memberEdges system | (_, system) <- allSystems molecule ])
-    , systems = allSystems molecule
-    }
+moleculeEdges :: Molecule -> Set Edge
+moleculeEdges molecule = S.unions [memberEdges system | (_, system) <- allSystems molecule]
 
 -- | Insert a 2e single-edge bonding system between two atoms (undirected).
 addSigma :: AtomId -> AtomId -> Molecule -> Molecule
 addSigma i j m
-  | edge `S.member` localBonds m = m
+  | edge `S.member` moleculeEdges m = m
   | otherwise =
       m
-        { localBonds = S.insert edge (localBonds m)
-        , systems = systems m ++ [(nextSystemId m, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)]
+        { systems = systems m ++ [(nextSystemId m, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)]
         }
   where
     edge = mkEdge i j
@@ -248,9 +221,9 @@ distanceAngstrom a b =
 -- | Sigma neighbors of a given atom (\963 bonds only).
 neighborsSigma :: Molecule -> AtomId -> [AtomId]
 neighborsSigma m i =
-  [ if a == i then b else a
-  | Edge a b <- S.toList (localBonds m)
-  , a == i || b == i ]
+    [ if a == i then b else a
+    | Edge a b <- S.toList (moleculeEdges m)
+    , a == i || b == i ]
 
 -- | All Dietz bonding systems containing a given edge.
 edgeSystems :: Molecule -> Edge -> [SystemId]
@@ -538,16 +511,17 @@ systemDisplayLabel bs =
 
 covalentLabel :: BondingSystem -> Maybe String
 covalentLabel bs
-  | tag bs `notElem` [Nothing, Just "single", Just "double", Just "triple"] = Nothing
+  | tag bs `notElem` [Nothing, Just "single", Just "double", Just "triple", Just "quadruple"] = Nothing
   | S.size (memberEdges bs) /= 1 = Nothing
   | getNN (sharedElectrons bs) == 2 = Just "single covalent"
   | getNN (sharedElectrons bs) == 4 = Just "double covalent"
   | getNN (sharedElectrons bs) == 6 = Just "triple covalent"
+  | getNN (sharedElectrons bs) == 8 = Just "quadruple covalent"
   | otherwise = Nothing
 
 formatEdgeSystemRef :: SystemId -> BondingSystem -> String
 formatEdgeSystemRef sid bs
-  | S.size (memberEdges bs) == 1 && getNN (sharedElectrons bs) `elem` [2, 4, 6] =
+  | S.size (memberEdges bs) == 1 && getNN (sharedElectrons bs) `elem` [2, 4, 6, 8] =
       label ++ ":" ++ formatElectrons edgeElectrons
   | otherwise =
       label ++ ":" ++ formatElectrons edgeElectrons

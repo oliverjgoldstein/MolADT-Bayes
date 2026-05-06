@@ -7,8 +7,9 @@ import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 import Chem.Dietz
-  ( AtomId(..)
-  , Edge(..)
+    ( AtomId(..)
+    , BondingSystem
+    , Edge(..)
   , NonNegative(..)
   , SystemId(..)
   , mkBondingSystem
@@ -23,15 +24,14 @@ import Chem.Molecule
   , SmilesAtomStereoClass(..)
   , SmilesBondStereo(..)
   , SmilesBondStereoDirection(..)
-  , SmilesStereochemistry(..)
-  , emptySmilesStereochemistry
-  , mkAngstrom
-  , withLocalBondsAsSystems
-  )
+    , SmilesStereochemistry(..)
+    , emptySmilesStereochemistry
+    , mkAngstrom
+    )
 import Constants (elementAttributes)
 
 ferrocenePretty :: Molecule
-ferrocenePretty = withLocalBondsAsSystems $ Molecule
+ferrocenePretty = Molecule
   { atoms =
       M.fromList
         [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes Fe, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes Fe), formalCharge = 0 })
@@ -55,29 +55,6 @@ ferrocenePretty = withLocalBondsAsSystems $ Molecule
         , (AtomId 19, Atom { atomID = AtomId 19, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-2.27)) (mkAngstrom 0.0) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         , (AtomId 20, Atom { atomID = AtomId 20, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-0.7016)) (mkAngstrom (-2.1582)) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         , (AtomId 21, Atom { atomID = AtomId 21, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 1.8364) (mkAngstrom (-1.3338)) (mkAngstrom (-1.66)), shells = defaultShells (elementAttributes H), formalCharge = 0 })
-        ]
-  , localBonds =
-      S.fromList
-        [ Edge (AtomId 2) (AtomId 3)
-        , Edge (AtomId 2) (AtomId 6)
-        , Edge (AtomId 2) (AtomId 12)
-        , Edge (AtomId 3) (AtomId 4)
-        , Edge (AtomId 3) (AtomId 13)
-        , Edge (AtomId 4) (AtomId 5)
-        , Edge (AtomId 4) (AtomId 14)
-        , Edge (AtomId 5) (AtomId 6)
-        , Edge (AtomId 5) (AtomId 15)
-        , Edge (AtomId 6) (AtomId 16)
-        , Edge (AtomId 7) (AtomId 8)
-        , Edge (AtomId 7) (AtomId 11)
-        , Edge (AtomId 7) (AtomId 17)
-        , Edge (AtomId 8) (AtomId 9)
-        , Edge (AtomId 8) (AtomId 18)
-        , Edge (AtomId 9) (AtomId 10)
-        , Edge (AtomId 9) (AtomId 19)
-        , Edge (AtomId 10) (AtomId 11)
-        , Edge (AtomId 10) (AtomId 20)
-        , Edge (AtomId 11) (AtomId 21)
         ]
   , systems =
       [ ( SystemId 1
@@ -124,6 +101,31 @@ ferrocenePretty = withLocalBondsAsSystems $ Molecule
             )
             (Just "fe_cp_coordination")
         )
-      ]
+        ]
+        ++ [ singleCovalentSystem 4 (Edge (AtomId 2) (AtomId 3))
+           , singleCovalentSystem 5 (Edge (AtomId 2) (AtomId 6))
+           , singleCovalentSystem 6 (Edge (AtomId 2) (AtomId 12))
+           , singleCovalentSystem 7 (Edge (AtomId 3) (AtomId 4))
+           , singleCovalentSystem 8 (Edge (AtomId 3) (AtomId 13))
+           , singleCovalentSystem 9 (Edge (AtomId 4) (AtomId 5))
+           , singleCovalentSystem 10 (Edge (AtomId 4) (AtomId 14))
+           , singleCovalentSystem 11 (Edge (AtomId 5) (AtomId 6))
+           , singleCovalentSystem 12 (Edge (AtomId 5) (AtomId 15))
+           , singleCovalentSystem 13 (Edge (AtomId 6) (AtomId 16))
+           , singleCovalentSystem 14 (Edge (AtomId 7) (AtomId 8))
+           , singleCovalentSystem 15 (Edge (AtomId 7) (AtomId 11))
+           , singleCovalentSystem 16 (Edge (AtomId 7) (AtomId 17))
+           , singleCovalentSystem 17 (Edge (AtomId 8) (AtomId 9))
+           , singleCovalentSystem 18 (Edge (AtomId 8) (AtomId 18))
+           , singleCovalentSystem 19 (Edge (AtomId 9) (AtomId 10))
+           , singleCovalentSystem 20 (Edge (AtomId 9) (AtomId 19))
+           , singleCovalentSystem 21 (Edge (AtomId 10) (AtomId 11))
+           , singleCovalentSystem 22 (Edge (AtomId 10) (AtomId 20))
+           , singleCovalentSystem 23 (Edge (AtomId 11) (AtomId 21))
+           ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
+
+singleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
+singleCovalentSystem systemId edge =
+  (SystemId systemId, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)

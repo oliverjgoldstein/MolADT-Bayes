@@ -40,7 +40,7 @@ For example, diborane is represented with named bridge systems:
 
 ```haskell
 diboranePretty :: Molecule
-diboranePretty = withLocalBondsAsSystems $ Molecule
+diboranePretty = Molecule
   { atoms =
       M.fromList
         [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes B, coordinate = Coordinate (mkAngstrom (-0.885)) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes B), formalCharge = 0 })
@@ -52,28 +52,25 @@ diboranePretty = withLocalBondsAsSystems $ Molecule
         , (AtomId 7, Atom { atomID = AtomId 7, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 0.885) (mkAngstrom 1.19) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         , (AtomId 8, Atom { atomID = AtomId 8, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 0.885) (mkAngstrom (-1.19)) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
-  , localBonds =
-      S.fromList
-        [ Edge (AtomId 1) (AtomId 2)
-        , Edge (AtomId 1) (AtomId 5)
-        , Edge (AtomId 1) (AtomId 6)
-        , Edge (AtomId 2) (AtomId 7)
-        , Edge (AtomId 2) (AtomId 8)
-        ]
   , systems =
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3), Edge (AtomId 2) (AtomId 3)]) (Just "bridge_h3_3c2e"))
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 4), Edge (AtomId 2) (AtomId 4)]) (Just "bridge_h4_3c2e"))
+      , (SystemId 3, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
+      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 5)]) Nothing)
+      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 6)]) Nothing)
+      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 7)]) Nothing)
+      , (SystemId 7, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 8)]) Nothing)
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
 ```
 
 The checked examples use this canonical normal form: atoms sorted by `AtomId`,
-edges written directly as normalized `Edge (AtomId a) (AtomId b)` values, and
-systems sorted by `SystemId`. They do not hide atoms, edge systems, or
-bonding-system edges behind ranges, zips, helpers, or generated tables. Legacy
-edge entries are normalized into one-edge `single covalent` systems. That is
-the kind of structure a Bayesian proposal kernel can edit directly.
+edges written directly inside bonding systems as normalized
+`Edge (AtomId a) (AtomId b)` values, and systems sorted by `SystemId`. They do
+not hide atoms, edge systems, or bonding-system edges behind ranges, zips,
+helpers, or generated tables. That is the kind of structure a Bayesian proposal
+kernel can edit directly.
 
 Viewer version:
 

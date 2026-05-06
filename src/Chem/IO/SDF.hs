@@ -298,7 +298,6 @@ applyCharges atoms charges =
 buildMolecule :: [Atom] -> [(Edge, Int)] -> Molecule
 buildMolecule atomList bonds =
   let atomMap = M.fromList [(atomID atom, atom) | atom <- atomList]
-      local = S.fromList [edge | (edge, _) <- bonds]
       rings = detectSixRings bonds
       aromaticRingEdges = S.unions rings
       edgeSystems =
@@ -312,7 +311,7 @@ buildMolecule atomList bonds =
         | (idx, ring) <- zip [ringOffset + 1 ..] rings
         ]
       sysList = edgeSystems ++ ringSystems
-  in withLocalBondsAsSystems (Molecule atomMap local sysList emptySmilesStereochemistry)
+  in Molecule atomMap sysList emptySmilesStereochemistry
 
 bondElectronSystem :: Int -> Bool -> (Int, Maybe String)
 bondElectronSystem order inAromaticRing
@@ -320,7 +319,7 @@ bondElectronSystem order inAromaticRing
   | order == 1 = (2, Nothing)
   | order == 2 = (4, Nothing)
   | order == 3 = (6, Nothing)
-  | order == 4 = (2, Nothing)
+  | order == 4 = (8, Nothing)
   | otherwise = (2, Just ("sdf_bond_type_" ++ show order))
 
 

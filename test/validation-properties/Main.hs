@@ -16,7 +16,7 @@ import qualified Data.Set as S
 -- | Relabel a molecule according to a permutation of its 'AtomId's.  All
 -- structural data (atoms, bonds and Dietz systems) are updated consistently.
 relabelMolecule :: Molecule -> [AtomId] -> Molecule
-relabelMolecule m perm = Molecule atoms' bonds' systems' (smilesStereochemistry m)
+relabelMolecule m perm = Molecule atoms' systems' (smilesStereochemistry m)
   where
     oldIds   = M.keys (atoms m)
     mapping  = M.fromList (zip oldIds perm)
@@ -25,10 +25,6 @@ relabelMolecule m perm = Molecule atoms' bonds' systems' (smilesStereochemistry 
     atoms' = M.fromList
       [ (rename i, a { atomID = rename i })
       | (i, a) <- M.toList (atoms m) ]
-
-    bonds' = S.fromList
-      [ mkEdge (rename i) (rename j)
-      | Edge i j <- S.toList (localBonds m) ]
 
     systems' =
       [ ( sid
