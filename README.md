@@ -94,7 +94,8 @@ around the molecule without hiding the molecule fields.
 - **Editable structure**: inverse-design experiments can operate on atoms,
   hydrogens, and bonding systems as typed concepts.
 - **Inspectable outputs**: the standalone viewer shows atoms, every edge, and
-  explicit electron-sharing systems from the same typed payload.
+  explicit electron-sharing systems from the same typed payload. Ionic edges
+  render as blue-to-red charge gradients from positive to negative atoms.
 - **Algebraic contracts**: rotations, atom relabelings, or other transforms can
   be expressed with type classes as groups acting on molecules, giving
   geometric models a clear place to state invariance and equivariance.

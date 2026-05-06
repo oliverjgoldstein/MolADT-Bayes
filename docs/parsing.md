@@ -109,7 +109,9 @@ main = do
 
 The viewer panel lists explicit bonding systems, including the one-edge systems
 for ordinary bonds, so molecules like diborane and ferrocene are inspectable as
-ADTs rather than flattened bond tables.
+ADTs rather than flattened bond tables. Ionic edges are drawn as blue-to-red
+charge gradients, where blue marks the positive atom and red marks the negative
+atom.
 
 ## SMILES To MolADT
 

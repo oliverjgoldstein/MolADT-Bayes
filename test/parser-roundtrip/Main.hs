@@ -110,6 +110,19 @@ v3000SodiumChloride = unlines
   , "$$$$"
   ]
 
+v2000ChargeCodeSodiumChloride :: String
+v2000ChargeCodeSodiumChloride = unlines
+  [ "sodium chloride charge codes"
+  , "MolADT"
+  , "generated"
+  , "  2  1  0  0  0  0            999 V2000"
+  , "    0.0000    0.0000    0.0000 Na  0  3  0  0  0  0  0  0  0  0  0  0"
+  , "    2.3600    0.0000    0.0000 Cl  0  5  0  0  0  0  0  0  0  0  0  0"
+  , "  1  2  1  0  0  0  0"
+  , "M  END"
+  , "$$$$"
+  ]
+
 -- | Run the Hspec suite defined in 'spec'.
 main :: IO ()
 main = hspec spec
@@ -154,6 +167,14 @@ spec = do
         Right mol ->
           fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
 
+    it "reads V2000 atom charge codes into formal charges" $
+      case parseSDF v2000ChargeCodeSodiumChloride of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
+          fmap formalCharge (M.lookup (AtomId 2) (atoms mol)) `shouldBe` Just (-1)
+          countTag (Just "ionic") mol `shouldBe` 1
+
     it "maps non-aromatic SDF bond type 4 to an eight-electron quadruple covalent system" $
       case parseSDF v3000Quadruple of
         Left err -> expectationFailure (errorBundlePretty err)
@@ -170,7 +191,10 @@ spec = do
           getNN (sharedElectrons (snd (head (systems mol)))) `shouldBe` 0
           case parseSDF (moleculeToSDF mol) of
             Left err -> expectationFailure (errorBundlePretty err)
-            Right mol' -> countTag (Just "ionic") mol' `shouldBe` 1
+            Right mol' -> do
+              fmap formalCharge (M.lookup (AtomId 1) (atoms mol')) `shouldBe` Just 1
+              fmap formalCharge (M.lookup (AtomId 2) (atoms mol')) `shouldBe` Just (-1)
+              countTag (Just "ionic") mol' `shouldBe` 1
 
     it "parses multiple SDF records from one payload" $
       case parseSDFRecords (v3000Water ++ v3000Ammonium) of
@@ -391,6 +415,13 @@ spec = do
       html `shouldContain` "bridge_h3_3c2e"
       html `shouldContain` "bridge_h4_3c2e"
       html `shouldNotContain` "Molecule Report"
+
+    it "renders ionic edges with charge-gradient support" $ do
+      let html = moleculeViewerHTML "Sodium chloride viewer" sodiumChloride
+      html `shouldContain` "\"kind\":\"ionic\""
+      html `shouldContain` "positiveChargeColor"
+      html `shouldContain` "negativeChargeColor"
+      html `shouldContain` "chargeGradientForEdge"
 
     it "renders a collection viewer for multiple built-in molecules" $ do
       let html = moleculeViewerCollectionHTML "Example viewer" [("Diborane", diboranePretty), ("Morphine", morphinePretty)]

@@ -38,6 +38,13 @@ moleculeViewerPayload title molecule =
     ]
   where
     allEdges = moleculeEdges molecule
+    ionicEdges =
+      S.fromList
+        [ edge
+        | (_, bondingSystem) <- allSystems molecule
+        , isIonicSystem bondingSystem
+        , edge <- S.toList (memberEdges bondingSystem)
+        ]
 
     atomPayload :: (AtomId, Atom) -> A.Value
     atomPayload (AtomId rawId, atom) =
@@ -70,7 +77,7 @@ moleculeViewerPayload title molecule =
         ]
       where
         edgeKind :: T.Text
-        edgeKind = "system"
+        edgeKind = if edge `S.member` ionicEdges then "ionic" else "system"
 
     systemPayload :: (SystemId, BondingSystem) -> A.Value
     systemPayload (SystemId rawId, bondingSystem) =
@@ -97,10 +104,14 @@ moleculeViewerPayload title molecule =
 
     ionicLabel :: BondingSystem -> Maybe String
     ionicLabel bondingSystem
-      | tag bondingSystem == Just "ionic"
-      , S.size (memberEdges bondingSystem) == 1
-      , getNN (sharedElectrons bondingSystem) == 0 = Just "ionic"
+      | isIonicSystem bondingSystem = Just "ionic"
       | otherwise = Nothing
+
+    isIonicSystem :: BondingSystem -> Bool
+    isIonicSystem bondingSystem =
+      tag bondingSystem == Just "ionic"
+        && S.size (memberEdges bondingSystem) == 1
+        && getNN (sharedElectrons bondingSystem) == 0
 
     covalentLabel :: BondingSystem -> Maybe String
     covalentLabel bondingSystem
@@ -438,6 +449,8 @@ viewerHTML title payloadValue =
     , "    lastY: 0"
     , "  };"
     , "  const systemColors = ['#f05a3f', '#008f87', '#7b5cff', '#d89b00', '#2f73d9', '#c43b78', '#258a45', '#94552b'];"
+    , "  const positiveChargeColor = '#2563eb';"
+    , "  const negativeChargeColor = '#dc2626';"
     , "  function edgeKey(a, b) { return Number(a) <= Number(b) ? `${a}-${b}` : `${b}-${a}`; }"
     , "  function idValue(value) {"
     , "    if (value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'value')) return Number(value.value);"
@@ -557,6 +570,11 @@ viewerHTML title payloadValue =
     , "        if (bond) bond.order = (bond.order || 0) + perEdge;"
     , "      });"
     , "    });"
+    , "    const ionicEdgeKeys = ionicEdgeKeySet(systems);"
+    , "    ionicEdgeKeys.forEach(function (key) {"
+    , "      const bond = bondsByKey.get(key);"
+    , "      if (bond) bond.kind = 'ionic';"
+    , "    });"
     , "    const bonds = Array.from(bondsByKey.values());"
     , "    return {"
     , "      format: 'moladt-viewer-v1',"
@@ -581,6 +599,26 @@ viewerHTML title payloadValue =
     , "    if (sharedElectrons === 6) return 'triple covalent';"
     , "    if (sharedElectrons === 8) return 'quadruple covalent';"
     , "    return null;"
+    , "  }"
+    , "  function isIonicSystem(system) {"
+    , "    return system && system.tag === 'ionic' && system.sharedElectrons === 0 && system.edges && system.edges.length === 1;"
+    , "  }"
+    , "  function ionicEdgeKeySet(systems) {"
+    , "    const keys = new Set();"
+    , "    (systems || []).forEach(function (system) {"
+    , "      if (isIonicSystem(system)) system.edges.forEach(function (edge) { keys.add(edgeKey(edge.a, edge.b)); });"
+    , "    });"
+    , "    return keys;"
+    , "  }"
+    , "  function chargeColor(charge) {"
+    , "    if (Number(charge) > 0) return positiveChargeColor;"
+    , "    if (Number(charge) < 0) return negativeChargeColor;"
+    , "    return '#8a95a3';"
+    , "  }"
+    , "  function chargeGradientForEdge(atomMap, edge) {"
+    , "    const atomA = atomMap.get(Number(edge.a));"
+    , "    const atomB = atomMap.get(Number(edge.b));"
+    , "    return { colorA: chargeColor(atomA ? atomA.charge : 0), colorB: chargeColor(atomB ? atomB.charge : 0) };"
     , "  }"
     , "  function normalisePayload(raw) {"
     , "    if (raw && raw.format === 'moladt-viewer-v1') return raw;"
@@ -682,7 +720,10 @@ viewerHTML title payloadValue =
     , "    ctx.globalAlpha = options.alpha == null ? 1 : options.alpha;"
     , "    ctx.lineWidth = options.width || 2;"
     , "    ctx.lineCap = 'round';"
-    , "    ctx.strokeStyle = color;"
+    , "    const gradient = ctx.createLinearGradient(a.x + ox, a.y + oy, b.x + ox, b.y + oy);"
+    , "    gradient.addColorStop(0, options.colorA || color);"
+    , "    gradient.addColorStop(1, options.colorB || color);"
+    , "    ctx.strokeStyle = gradient;"
     , "    if (options.dashed) ctx.setLineDash([7, 8]);"
     , "    ctx.beginPath();"
     , "    ctx.moveTo(a.x + ox, a.y + oy);"
@@ -696,13 +737,15 @@ viewerHTML title payloadValue =
     , "    const size = { w: canvas.clientWidth || 900, h: canvas.clientHeight || 640 };"
     , "    ctx.clearRect(0, 0, size.w, size.h);"
     , "    const modelBounds = bounds(payload.atoms);"
+    , "    const atomMap = new Map(payload.atoms.map(function (atom) { return [atom.id, atom]; }));"
     , "    const projected = new Map();"
     , "    payload.atoms.forEach(function (atom) { projected.set(atom.id, project(atom, modelBounds, size)); });"
     , "    drawAxes(modelBounds, size);"
     , "    payload.bonds.forEach(function (bond) {"
     , "      const a = projected.get(bond.a);"
     , "      const b = projected.get(bond.b);"
-    , "      drawEdge(a, b, bond.kind === 'system' ? '#9aa6b2' : '#8a95a3', { offset: 0, alpha: bond.kind === 'system' ? 0.24 : 0.58, width: Math.max(2, Math.min(5, 1.7 + Number(bond.order || 1))) });"
+    , "      const chargeGradient = bond.kind === 'ionic' ? chargeGradientForEdge(atomMap, bond) : null;"
+    , "      drawEdge(a, b, bond.kind === 'system' ? '#9aa6b2' : '#8a95a3', { offset: 0, alpha: bond.kind === 'ionic' ? 0.92 : (bond.kind === 'system' ? 0.24 : 0.58), width: Math.max(2, Math.min(5, 1.7 + Number(bond.order || 1))), colorA: chargeGradient ? chargeGradient.colorA : null, colorB: chargeGradient ? chargeGradient.colorB : null });"
     , "    });"
     , "    if (state.systems) {"
     , "      const lanes = systemEdgeLaneMap(payload.systems);"
@@ -712,10 +755,13 @@ viewerHTML title payloadValue =
     , "          const laneIds = lanes.get(edgeKey(edge.a, edge.b)) || [system.id];"
     , "          const lane = Math.max(0, laneIds.indexOf(system.id));"
     , "          const laneOffset = (lane - (laneIds.length - 1) / 2) * 7;"
+    , "          const chargeGradient = isIonicSystem(system) ? chargeGradientForEdge(atomMap, edge) : null;"
     , "          drawEdge(projected.get(edge.a), projected.get(edge.b), system.color, {"
     , "            offset: laneOffset,"
     , "            alpha: active ? 1 : 0.18,"
-    , "            width: active ? 4 : 2"
+    , "            width: active ? 4 : 2,"
+    , "            colorA: chargeGradient ? chargeGradient.colorA : null,"
+    , "            colorB: chargeGradient ? chargeGradient.colorB : null"
     , "          });"
     , "        });"
     , "      });"

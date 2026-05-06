@@ -129,10 +129,14 @@ parseCountsLine line =
 parseV2000Atom :: Int -> String -> Either String Atom
 parseV2000Atom idx line =
   case words line of
-    (xs : ys : zs : sym : _) ->
+    (xs : ys : zs : sym : rest) ->
       case (readMaybe xs, readMaybe ys, readMaybe zs, readMaybe sym) of
         (Just x, Just y, Just z, Just symbol) ->
           let attrs = elementAttributes symbol
+              chargeCode =
+                case rest of
+                  (_massDiff : chargeText : _) -> maybe 0 v2000ChargeFromCode (readMaybe chargeText)
+                  _ -> 0
           in
           Right
             Atom
@@ -140,10 +144,20 @@ parseV2000Atom idx line =
               , attributes = attrs
               , coordinate = Coordinate (mkAngstrom x) (mkAngstrom y) (mkAngstrom z)
               , shells = defaultShells attrs
-              , formalCharge = 0
+              , formalCharge = chargeCode
               }
         _ -> Left ("Invalid V2000 atom line: " ++ line)
     _ -> Left ("Invalid V2000 atom line: " ++ line)
+
+
+v2000ChargeFromCode :: Int -> Int
+v2000ChargeFromCode 1 = 3
+v2000ChargeFromCode 2 = 2
+v2000ChargeFromCode 3 = 1
+v2000ChargeFromCode 5 = -1
+v2000ChargeFromCode 6 = -2
+v2000ChargeFromCode 7 = -3
+v2000ChargeFromCode _ = 0
 
 
 parseV2000Bond :: String -> Either String (Edge, Int)
