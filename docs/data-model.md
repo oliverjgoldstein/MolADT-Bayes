@@ -27,9 +27,10 @@ That gives one inspectable object with four layers:
 
 Every edge belongs to a bonding system. Conventional single, double, and
 triple bonds are one-edge systems with `2`, `4`, and `6` shared electrons,
-tagged `single`, `double`, and `triple`. `localBonds` is kept as the edge index
-used by graph algorithms and legacy callers. Pretty-printing derives edge rows
-and shared-electron totals from the bonding systems.
+displayed as `single covalent`, `double covalent`, and `triple covalent`.
+`localBonds` is kept as the edge index used by graph algorithms and legacy
+callers. Pretty-printing derives edge rows and shared-electron totals from the
+bonding systems.
 
 ## Haskell Shape
 
@@ -235,7 +236,7 @@ water = withLocalBondsAsSystems $
 ```
 
 The important part is that callers may still provide legacy edges, but the
-normalized molecule has two one-edge `single` systems for the O-H bonds.
+normalized molecule has two one-edge `single covalent` systems for the O-H bonds.
 
 ## Canonical Normal Form
 

@@ -348,16 +348,16 @@ addBond left right bondKind = do
   case bondKind of
     BondSingle ->
       modify' $ \st -> st
-        { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) (Just "single") : psSystems st }
+        { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing : psSystems st }
     BondDouble ->
       modify' $ \st -> st
-        { psSystems = mkBondingSystem (NonNegative 4) (S.singleton edge) (Just "double") : psSystems st }
+        { psSystems = mkBondingSystem (NonNegative 4) (S.singleton edge) Nothing : psSystems st }
     BondTriple ->
       modify' $ \st -> st
-        { psSystems = mkBondingSystem (NonNegative 6) (S.singleton edge) (Just "triple") : psSystems st }
+        { psSystems = mkBondingSystem (NonNegative 6) (S.singleton edge) Nothing : psSystems st }
     BondAromatic ->
       modify' $ \st -> st
-        { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) (Just "single") : psSystems st
+        { psSystems = mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing : psSystems st
         , psAromaticEdges = S.insert edge (psAromaticEdges st)
         }
 

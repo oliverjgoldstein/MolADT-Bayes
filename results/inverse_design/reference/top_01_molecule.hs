@@ -50,12 +50,12 @@ molecule = either error id (validateMolecule (Molecule
       , Edge (AtomId 3) (AtomId 4)
       ]
   , systems =
-      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Just ("single"))
-      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 3)]) Just ("single"))
-      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 3) (AtomId 4)]) Just ("single"))
-      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 5)]) Just ("single"))
-      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 6)]) Just ("single"))
-      , (SystemId 7, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 7)]) Just ("single"))
+      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 2)]) Nothing)
+      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 3)]) Nothing)
+      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 3) (AtomId 4)]) Nothing)
+      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 5)]) Nothing)
+      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 6)]) Nothing)
+      , (SystemId 7, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 2) (AtomId 7)]) Nothing)
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }))

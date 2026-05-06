@@ -96,7 +96,7 @@ spec = do
         Left err -> expectationFailure (errorBundlePretty err)
         Right mol -> do
           length (systems mol) `shouldBe` 13
-          countTag (Just "single") mol `shouldBe` 12
+          countUnnamedEdgeSystems 2 mol `shouldBe` 12
           countTag (Just "pi_ring") mol `shouldBe` 1
 
     it "parses the core V3000 atom and bond blocks" $
@@ -123,14 +123,14 @@ spec = do
   describe "SMILES boundary" $ do
     it "recovers a pi ring from aromatic benzene SMILES" $ do
       case parseSMILES "c1ccccc1" of
-        Left err -> expectationFailure err
-        Right mol -> do
-          countSymbol C mol `shouldBe` 6
-          countSymbol H mol `shouldBe` 6
-          S.size (localBonds mol) `shouldBe` 12
-          length (systems mol) `shouldBe` 13
-          countTag (Just "single") mol `shouldBe` 12
-          countTag (Just "pi_ring") mol `shouldBe` 1
+          Left err -> expectationFailure err
+          Right mol -> do
+            countSymbol C mol `shouldBe` 6
+            countSymbol H mol `shouldBe` 6
+            S.size (localBonds mol) `shouldBe` 12
+            length (systems mol) `shouldBe` 13
+            countUnnamedEdgeSystems 2 mol `shouldBe` 12
+            countTag (Just "pi_ring") mol `shouldBe` 1
 
     it "infers terminal hydrogens for bare methane and water SMILES" $ do
       case parseSMILES "C" of
@@ -186,14 +186,14 @@ spec = do
             Right smilesText -> do
               smilesText `shouldBe` "[CH]1=[CH][CH]=[CH][CH]=[CH]1"
               case parseSMILES smilesText of
-                Left err -> expectationFailure err
-                Right mol' -> do
-                  countSymbol C mol' `shouldBe` 6
-                  countSymbol H mol' `shouldBe` 6
-                  S.size (localBonds mol') `shouldBe` 12
-                  length (systems mol') `shouldBe` 12
-                  countTag (Just "single") mol' `shouldBe` 9
-                  countTag (Just "double") mol' `shouldBe` 3
+                  Left err -> expectationFailure err
+                  Right mol' -> do
+                    countSymbol C mol' `shouldBe` 6
+                    countSymbol H mol' `shouldBe` 6
+                    S.size (localBonds mol') `shouldBe` 12
+                    length (systems mol') `shouldBe` 12
+                    countUnnamedEdgeSystems 2 mol' `shouldBe` 9
+                    countUnnamedEdgeSystems 4 mol' `shouldBe` 3
 
     it "records atom-centered stereochemistry from chiral bracket atoms" $ do
       case parseSMILES "N[C@](Br)(O)C" of
@@ -266,8 +266,8 @@ spec = do
           countSymbol O mol `shouldBe` 3
           S.size (localBonds mol) `shouldBe` 44
           length (systems mol) `shouldBe` 44
-          countTag (Just "single") mol `shouldBe` 40
-          countTag (Just "double") mol `shouldBe` 4
+          countUnnamedEdgeSystems 2 mol `shouldBe` 40
+          countUnnamedEdgeSystems 4 mol `shouldBe` 4
           map
             (\item -> (stereoCenter item, stereoClass item, stereoConfiguration item, stereoToken item))
             (atomStereoAnnotations (smilesStereochemistry mol))
@@ -328,7 +328,7 @@ spec = do
         Right mol -> do
           S.size (localBonds mol) `shouldBe` 25
           map (tag . snd) (take 2 (systems mol)) `shouldBe` [Just "alkene_bridge", Just "phenyl_pi_ring"]
-          countTag (Just "single") mol `shouldBe` 24
+          countUnnamedEdgeSystems 2 mol `shouldBe` 24
           map
             (\item -> (stereoCenter item, stereoClass item, stereoConfiguration item, stereoToken item))
             (atomStereoAnnotations (smilesStereochemistry mol))
@@ -370,4 +370,14 @@ countTag expected mol =
     [ ()
     | (_, system) <- systems mol
     , tag system == expected
+    ]
+
+countUnnamedEdgeSystems :: Int -> Molecule -> Int
+countUnnamedEdgeSystems electrons mol =
+  length
+    [ ()
+    | (_, system) <- systems mol
+    , tag system == Nothing
+    , S.size (memberEdges system) == 1
+    , getNN (sharedElectrons system) == electrons
     ]

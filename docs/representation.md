@@ -33,7 +33,7 @@ The fields stay separate because they mean different things.
 
 Every edge is represented by a bonding system. Conventional single, double, and
 triple bonds are one-edge systems with `2`, `4`, and `6` shared electrons,
-tagged `single`, `double`, and `triple`.
+displayed as `single covalent`, `double covalent`, and `triple covalent`.
 
 ## Why This Matters
 
@@ -67,9 +67,9 @@ Examples:
 
 | Molecule | Boundary notation hides | MolADT keeps |
 | --- | --- | --- |
-| Benzene | aromatic shorthand | one-edge `single` systems plus an explicit `pi_ring` system |
-| Diborane | bridge bonding | terminal `single` systems plus two `3c-2e` systems |
-| Ferrocene | sandwich bonding | Cp/C-H edge systems plus Cp pi systems and Fe-centred bonding pool |
+| Benzene | aromatic shorthand | one-edge `single covalent` systems plus an explicit `pi_ring` system |
+| Diborane | bridge bonding | terminal `single covalent` systems plus two `3c-2e` systems |
+| Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Cp pi systems and an Fe-Cp coordination system |
 | Morphine | fused ring bookkeeping | every edge as a system plus stereo annotations |
 
 ## Explicit Haskell Examples
@@ -84,7 +84,7 @@ stack run moladtbayes -- pretty-example morphine
 ```
 
 The ferrocene source uses one atom table, an edge index, and explicit Dietz
-systems. Legacy edge-index entries are normalized into one-edge `single`
+systems. Legacy edge-index entries are normalized into one-edge `single covalent`
 systems; the named bonding systems are direct `S.fromList` values:
 
 ```haskell
@@ -93,12 +93,7 @@ systems =
     , mkBondingSystem
         (NonNegative 6)
         (S.fromList
-          [ Edge (AtomId 1) (AtomId 2)
-          , Edge (AtomId 1) (AtomId 3)
-          , Edge (AtomId 1) (AtomId 4)
-          , Edge (AtomId 1) (AtomId 5)
-          , Edge (AtomId 1) (AtomId 6)
-          , Edge (AtomId 2) (AtomId 3)
+          [ Edge (AtomId 2) (AtomId 3)
           , Edge (AtomId 2) (AtomId 6)
           , Edge (AtomId 3) (AtomId 4)
           , Edge (AtomId 4) (AtomId 5)
@@ -110,12 +105,7 @@ systems =
     , mkBondingSystem
         (NonNegative 6)
         (S.fromList
-          [ Edge (AtomId 1) (AtomId 7)
-          , Edge (AtomId 1) (AtomId 8)
-          , Edge (AtomId 1) (AtomId 9)
-          , Edge (AtomId 1) (AtomId 10)
-          , Edge (AtomId 1) (AtomId 11)
-          , Edge (AtomId 7) (AtomId 8)
+          [ Edge (AtomId 7) (AtomId 8)
           , Edge (AtomId 7) (AtomId 11)
           , Edge (AtomId 8) (AtomId 9)
           , Edge (AtomId 9) (AtomId 10)
@@ -125,7 +115,7 @@ systems =
     )
   , ( SystemId 3
     , mkBondingSystem
-        (NonNegative 6)
+        (NonNegative 12)
         (S.fromList
           [ Edge (AtomId 1) (AtomId 2)
           , Edge (AtomId 1) (AtomId 3)
@@ -138,7 +128,7 @@ systems =
           , Edge (AtomId 1) (AtomId 10)
           , Edge (AtomId 1) (AtomId 11)
           ])
-        (Just "fe_backdonation")
+        (Just "fe_cp_coordination")
     )
   ]
 ```

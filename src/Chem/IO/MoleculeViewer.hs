@@ -88,7 +88,22 @@ moleculeViewerPayload title molecule =
         , "edges" .= map systemEdgePayload (S.toAscList (memberEdges bondingSystem))
         ]
       where
-        labelText = maybe ("system " ++ show rawId) id (tag bondingSystem)
+        labelText = maybe ("system " ++ show rawId) id (viewerSystemLabel bondingSystem)
+
+    viewerSystemLabel :: BondingSystem -> Maybe String
+    viewerSystemLabel bondingSystem =
+      case covalentLabel bondingSystem of
+        Just label -> Just label
+        Nothing -> tag bondingSystem
+
+    covalentLabel :: BondingSystem -> Maybe String
+    covalentLabel bondingSystem
+      | tag bondingSystem `notElem` [Nothing, Just "single", Just "double", Just "triple"] = Nothing
+      | S.size (memberEdges bondingSystem) /= 1 = Nothing
+      | getNN (sharedElectrons bondingSystem) == 2 = Just "single covalent"
+      | getNN (sharedElectrons bondingSystem) == 4 = Just "double covalent"
+      | getNN (sharedElectrons bondingSystem) == 6 = Just "triple covalent"
+      | otherwise = Nothing
 
     atomIdValue :: AtomId -> Integer
     atomIdValue (AtomId rawId) = rawId
@@ -517,11 +532,12 @@ viewerHTML title payloadValue =
     , "      });"
     , "      const tag = system.tag || null;"
     , "      const shared = system.shared_electrons || system.sharedElectrons || { value: 0 };"
+    , "      const sharedElectrons = idValue(shared);"
     , "      return {"
     , "        id: id,"
-    , "        label: tag || `system ${id}` ,"
+    , "        label: systemLabel(id, tag, sharedElectrons, edges),"
     , "        tag: tag,"
-    , "        sharedElectrons: idValue(shared),"
+    , "        sharedElectrons: sharedElectrons,"
     , "        color: system.color || systemColors[(id - 1 + systemColors.length) % systemColors.length],"
     , "        atoms: (system.member_atoms || system.atoms || []).map(idValue),"
     , "        edges: edges"
@@ -536,6 +552,19 @@ viewerHTML title payloadValue =
     , "      systems: systems,"
     , "      angles: raw.angles || buildAnglePayloads(atomMap, bonds, systems)"
     , "    };"
+    , "  }"
+    , "  function systemLabel(id, tag, sharedElectrons, edges) {"
+    , "    const covalent = covalentLabel(tag, sharedElectrons, edges);"
+    , "    const display = covalent || tag;"
+    , "    return display ? `#${id} ${display}` : `#${id}`;"
+    , "  }"
+    , "  function covalentLabel(tag, sharedElectrons, edges) {"
+    , "    if (tag && tag !== 'single' && tag !== 'double' && tag !== 'triple') return null;"
+    , "    if (!edges || edges.length !== 1) return null;"
+    , "    if (sharedElectrons === 2) return 'single covalent';"
+    , "    if (sharedElectrons === 4) return 'double covalent';"
+    , "    if (sharedElectrons === 6) return 'triple covalent';"
+    , "    return null;"
     , "  }"
     , "  function normalisePayload(raw) {"
     , "    if (raw && raw.format === 'moladt-viewer-v1') return raw;"

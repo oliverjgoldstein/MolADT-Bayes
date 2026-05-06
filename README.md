@@ -53,12 +53,13 @@ data Molecule = Molecule
 
 `systems` is the canonical bonding layer. A conventional single, double, or
 triple bond is a one-edge `BondingSystem` with `2`, `4`, or `6` shared
-electrons, tagged `single`, `double`, or `triple`. `localBonds` is kept as a
-derived edge index for graph traversal and older callers; `withLocalBondsAsSystems`
-lifts legacy edge-only molecules into explicit two-electron `single` systems.
+electrons. Pretty printers and viewers display these as `single covalent`,
+`double covalent`, or `triple covalent`. `localBonds` is kept as a derived edge
+index for graph traversal and older callers; `withLocalBondsAsSystems` lifts
+legacy edge-only molecules into explicit two-electron `single covalent` systems.
 Pretty printing derives display edges from the bonding systems and reports the
 total electrons shared over each edge. For benzene, a C-C edge is shown as
-`shared=3e` and `order=1.50`: `2e` from the one-edge `single` system plus
+`shared=3e` and `order=1.50`: `2e` from the one-edge `single covalent` system plus
 `1e/edge` from the six-electron `pi_ring`. The viewer lists the same explicit
 bonding systems.
 Shells are optional on atoms, and `elementAttributes` now carries the default

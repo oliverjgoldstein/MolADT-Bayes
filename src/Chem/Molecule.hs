@@ -212,7 +212,7 @@ allSystems molecule = sortOn fst (systems molecule ++ missingSystems)
     missingEdges = S.toAscList (localBonds molecule `S.difference` coveredConventionalEdges)
     nextId = maybe 1 ((+ 1) . systemIdInt . maximum) (safeNonEmpty [ sid | (sid, _) <- systems molecule ])
     missingSystems =
-      [ (SystemId (nextId + offset), mkBondingSystem (NonNegative 2) (S.singleton edge) (Just "single"))
+      [ (SystemId (nextId + offset), mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)
       | (offset, edge) <- zip [0 ..] missingEdges
       ]
 
@@ -230,7 +230,7 @@ addSigma i j m
   | otherwise =
       m
         { localBonds = S.insert edge (localBonds m)
-        , systems = systems m ++ [(nextSystemId m, mkBondingSystem (NonNegative 2) (S.singleton edge) (Just "single"))]
+        , systems = systems m ++ [(nextSystemId m, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)]
         }
   where
     edge = mkEdge i j
@@ -451,7 +451,7 @@ formatSystemBlock m (sid, bs) = title : body
     atomsMap = atoms m
     SystemId sidNum = sid
     electrons = getNN (sharedElectrons bs)
-    title = maybe (printf "[#%d]" sidNum) (\lbl -> printf "[#%d] %s" sidNum lbl) (tag bs)
+    title = maybe (printf "[#%d]" sidNum) (\lbl -> printf "[#%d] %s" sidNum lbl) (systemDisplayLabel bs)
     edgesList = sort (S.toList (memberEdges bs))
 
     baseDetails =
@@ -528,7 +528,22 @@ formatSystemLabel :: SystemId -> BondingSystem -> String
 formatSystemLabel sid bs =
   let SystemId sidNum = sid
       base = "#" ++ show sidNum
-  in maybe base (\lbl -> base ++ "[" ++ lbl ++ "]") (tag bs)
+  in maybe base (\lbl -> base ++ "[" ++ lbl ++ "]") (systemDisplayLabel bs)
+
+systemDisplayLabel :: BondingSystem -> Maybe String
+systemDisplayLabel bs =
+  case covalentLabel bs of
+    Just label -> Just label
+    Nothing -> tag bs
+
+covalentLabel :: BondingSystem -> Maybe String
+covalentLabel bs
+  | tag bs `notElem` [Nothing, Just "single", Just "double", Just "triple"] = Nothing
+  | S.size (memberEdges bs) /= 1 = Nothing
+  | getNN (sharedElectrons bs) == 2 = Just "single covalent"
+  | getNN (sharedElectrons bs) == 4 = Just "double covalent"
+  | getNN (sharedElectrons bs) == 6 = Just "triple covalent"
+  | otherwise = Nothing
 
 formatEdgeSystemRef :: SystemId -> BondingSystem -> String
 formatEdgeSystemRef sid bs

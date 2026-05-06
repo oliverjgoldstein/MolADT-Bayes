@@ -80,9 +80,50 @@ ferrocenePretty = withLocalBondsAsSystems $ Molecule
         , Edge (AtomId 11) (AtomId 21)
         ]
   , systems =
-      [ (SystemId 1, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 2), Edge (AtomId 1) (AtomId 3), Edge (AtomId 1) (AtomId 4), Edge (AtomId 1) (AtomId 5), Edge (AtomId 1) (AtomId 6), Edge (AtomId 2) (AtomId 3), Edge (AtomId 2) (AtomId 6), Edge (AtomId 3) (AtomId 4), Edge (AtomId 4) (AtomId 5), Edge (AtomId 5) (AtomId 6)]) (Just "cp1_pi"))
-      , (SystemId 2, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 7), Edge (AtomId 1) (AtomId 8), Edge (AtomId 1) (AtomId 9), Edge (AtomId 1) (AtomId 10), Edge (AtomId 1) (AtomId 11), Edge (AtomId 7) (AtomId 8), Edge (AtomId 7) (AtomId 11), Edge (AtomId 8) (AtomId 9), Edge (AtomId 9) (AtomId 10), Edge (AtomId 10) (AtomId 11)]) (Just "cp2_pi"))
-      , (SystemId 3, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 2), Edge (AtomId 1) (AtomId 3), Edge (AtomId 1) (AtomId 4), Edge (AtomId 1) (AtomId 5), Edge (AtomId 1) (AtomId 6), Edge (AtomId 1) (AtomId 7), Edge (AtomId 1) (AtomId 8), Edge (AtomId 1) (AtomId 9), Edge (AtomId 1) (AtomId 10), Edge (AtomId 1) (AtomId 11)]) (Just "fe_backdonation"))
+      [ ( SystemId 1
+        , mkBondingSystem
+            (NonNegative 6)
+            (S.fromList
+              [ Edge (AtomId 2) (AtomId 3)
+              , Edge (AtomId 2) (AtomId 6)
+              , Edge (AtomId 3) (AtomId 4)
+              , Edge (AtomId 4) (AtomId 5)
+              , Edge (AtomId 5) (AtomId 6)
+              ]
+            )
+            (Just "cp1_pi")
+        )
+      , ( SystemId 2
+        , mkBondingSystem
+            (NonNegative 6)
+            (S.fromList
+              [ Edge (AtomId 7) (AtomId 8)
+              , Edge (AtomId 7) (AtomId 11)
+              , Edge (AtomId 8) (AtomId 9)
+              , Edge (AtomId 9) (AtomId 10)
+              , Edge (AtomId 10) (AtomId 11)
+              ]
+            )
+            (Just "cp2_pi")
+        )
+      , ( SystemId 3
+        , mkBondingSystem
+            (NonNegative 12)
+            (S.fromList
+              [ Edge (AtomId 1) (AtomId 2)
+              , Edge (AtomId 1) (AtomId 3)
+              , Edge (AtomId 1) (AtomId 4)
+              , Edge (AtomId 1) (AtomId 5)
+              , Edge (AtomId 1) (AtomId 6)
+              , Edge (AtomId 1) (AtomId 7)
+              , Edge (AtomId 1) (AtomId 8)
+              , Edge (AtomId 1) (AtomId 9)
+              , Edge (AtomId 1) (AtomId 10)
+              , Edge (AtomId 1) (AtomId 11)
+              ]
+            )
+            (Just "fe_cp_coordination")
+        )
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }

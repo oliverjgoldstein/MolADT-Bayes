@@ -22,7 +22,8 @@ Supported SDF input is intentionally practical:
 
 This is a parser for ordinary structure exports, not a full MDL query toolkit.
 Single, double, and triple bond table entries are lifted into one-edge bonding
-systems with 2, 4, and 6 shared electrons.
+systems with 2, 4, and 6 shared electrons, displayed as `single covalent`,
+`double covalent`, and `triple covalent`.
 
 Programmatic version:
 
@@ -115,7 +116,8 @@ stack run moladtbayes -- parse-smiles "c1ccccc1"
 
 The parser supports a conservative chemistry subset and lifts it into MolADT.
 Aromatic six-membered rings can become explicit `pi_ring` Dietz systems, while
-ordinary single/double/triple SMILES bonds become 2/4/6-electron edge systems.
+ordinary single/double/triple SMILES bonds become `single covalent`, `double covalent`,
+and `triple covalent` edge systems.
 
 ## MolADT To SMILES
 

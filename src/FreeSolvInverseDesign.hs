@@ -949,25 +949,18 @@ legacyBondingSystems molecule =
 conventionalOneEdgeSystem :: BondingSystem -> Bool
 conventionalOneEdgeSystem system =
   S.size (memberEdges system) == 1
-    && case tag system of
-      Just "single" -> getNN (sharedElectrons system) == 2
-      Just "double" -> getNN (sharedElectrons system) == 4
-      Just "triple" -> getNN (sharedElectrons system) == 6
-      _ -> False
+    && getNN (sharedElectrons system) `elem` [2, 4, 6]
 
 sigmaSingletonSystem :: BondingSystem -> Bool
 sigmaSingletonSystem system =
   conventionalOneEdgeSystem system
-    && tag system == Just "single"
+    && getNN (sharedElectrons system) == 2
 
 legacySystemSharedElectrons :: BondingSystem -> Double
 legacySystemSharedElectrons system =
-  case tag system of
-    Just "double"
-      | conventionalOneEdgeSystem system -> fromIntegral (getNN (sharedElectrons system) - 2)
-    Just "triple"
-      | conventionalOneEdgeSystem system -> fromIntegral (getNN (sharedElectrons system) - 2)
-    _ -> fromIntegral (getNN (sharedElectrons system))
+  if conventionalOneEdgeSystem system && getNN (sharedElectrons system) `elem` [4, 6]
+    then fromIntegral (getNN (sharedElectrons system) - 2)
+    else fromIntegral (getNN (sharedElectrons system))
 
 proposeMolecule :: Molecule -> StdGen -> (Maybe Molecule, StdGen)
 proposeMolecule molecule gen =

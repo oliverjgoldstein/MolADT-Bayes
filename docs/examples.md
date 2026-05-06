@@ -72,7 +72,7 @@ The checked examples use this canonical normal form: atoms sorted by `AtomId`,
 edges written directly as normalized `Edge (AtomId a) (AtomId b)` values, and
 systems sorted by `SystemId`. They do not hide atoms, edge systems, or
 bonding-system edges behind ranges, zips, helpers, or generated tables. Legacy
-edge entries are normalized into one-edge `single` systems. That is
+edge entries are normalized into one-edge `single covalent` systems. That is
 the kind of structure a Bayesian proposal kernel can edit directly.
 
 Viewer version:

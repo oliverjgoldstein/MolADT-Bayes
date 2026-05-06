@@ -302,7 +302,7 @@ buildMolecule atomList bonds =
       rings = detectSixRings bonds
       aromaticRingEdges = S.unions rings
       edgeSystems =
-        [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) (Just label))
+        [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) label)
         | (idx, (edge, order)) <- zip [1 ..] bonds
         , let (electrons, label) = bondElectronSystem order (edge `S.member` aromaticRingEdges)
         ]
@@ -314,14 +314,14 @@ buildMolecule atomList bonds =
       sysList = edgeSystems ++ ringSystems
   in withLocalBondsAsSystems (Molecule atomMap local sysList emptySmilesStereochemistry)
 
-bondElectronSystem :: Int -> Bool -> (Int, String)
+bondElectronSystem :: Int -> Bool -> (Int, Maybe String)
 bondElectronSystem order inAromaticRing
-  | inAromaticRing && order `elem` [1, 2, 4] = (2, "single")
-  | order == 1 = (2, "single")
-  | order == 2 = (4, "double")
-  | order == 3 = (6, "triple")
-  | order == 4 = (2, "aromatic_edge")
-  | otherwise = (2, "sdf_bond_type_" ++ show order)
+  | inAromaticRing && order `elem` [1, 2, 4] = (2, Nothing)
+  | order == 1 = (2, Nothing)
+  | order == 2 = (4, Nothing)
+  | order == 3 = (6, Nothing)
+  | order == 4 = (2, Nothing)
+  | otherwise = (2, Just ("sdf_bond_type_" ++ show order))
 
 
 chunksOf :: Int -> [a] -> [[a]]
