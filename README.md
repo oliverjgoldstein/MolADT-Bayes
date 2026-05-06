@@ -116,6 +116,7 @@ the molecule itself, not a notation that has to be decoded on every move.
 make haskell-build
 stack run moladtbayes -- parse molecules/benzene.sdf
 stack run moladtbayes -- parse-smiles "c1ccccc1"
+stack run moladtbayes -- pretty-example benzene
 stack run moladtbayes -- pretty-example ferrocene
 make haskell-viewer
 ```
@@ -146,6 +147,7 @@ stack run moladtbayes -- --help
 stack run moladtbayes -- to-json molecules/benzene.sdf > benzene.moladt.json
 stack run moladtbayes -- from-json benzene.moladt.json
 stack run moladtbayes -- view-html molecules/benzene.sdf --output results/viewer/benzene.viewer.html
+stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
 make haskell-test

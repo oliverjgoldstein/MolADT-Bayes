@@ -6,7 +6,7 @@ The examples show why MolADT is useful as typed data.
 
 | Example | Run | What it shows |
 | --- | --- | --- |
-| Benzene | `stack run moladtbayes -- parse molecules/benzene.sdf` | classical ring plus `pi_ring` system |
+| Benzene | `stack run moladtbayes -- pretty-example benzene` | classical ring plus `pi_ring` system |
 | Water | `stack run moladtbayes -- parse molecules/water.sdf` | small validated SDF example |
 | Morphine | `stack run moladtbayes -- pretty-example morphine` | fused topology and stereo annotations |
 | Diborane | `stack run moladtbayes -- pretty-example diborane` | two explicit `3c-2e` bridge systems |
@@ -76,6 +76,7 @@ Viewer version:
 
 ```bash
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
+stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example ferrocene --viewer-output results/viewer/ferrocene.viewer.html
 ```
 

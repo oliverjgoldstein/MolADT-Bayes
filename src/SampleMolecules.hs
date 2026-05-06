@@ -11,7 +11,6 @@ import qualified Data.Set as S
 
 import Chem.Dietz
     ( AtomId(..)
-    , BondingSystem
     , Edge(..)
   , NonNegative(..)
   , SystemId(..)
@@ -40,7 +39,7 @@ hydrogen = Molecule
         [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 0.74) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
-  , systems = [singleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))]
+  , systems = [(SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
 
@@ -51,7 +50,7 @@ oxygen = Molecule
         [ (AtomId 1, Atom { atomID = AtomId 1, attributes = elementAttributes O, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes O), formalCharge = 0 })
         , (AtomId 2, Atom { atomID = AtomId 2, attributes = elementAttributes O, coordinate = Coordinate (mkAngstrom 1.21) (mkAngstrom 0.0) (mkAngstrom 0.0), shells = defaultShells (elementAttributes O), formalCharge = 0 })
         ]
-  , systems = [doubleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))]
+  , systems = [(SystemId 1, mkBondingSystem (NonNegative 4) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
 
@@ -64,8 +63,8 @@ water = Molecule
         , (AtomId 3, Atom { atomID = AtomId 3, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom (-0.32)) (mkAngstrom 0.9) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
   , systems =
-      [ singleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))
-      , singleCovalentSystem 2 (Edge (AtomId 1) (AtomId 3))
+      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)
+      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 3))) Nothing)
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
@@ -81,18 +80,10 @@ methane = Molecule
         , (AtomId 5, Atom { atomID = AtomId 5, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 0.0) (mkAngstrom (-1.09)) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
   , systems =
-      [ singleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))
-      , singleCovalentSystem 2 (Edge (AtomId 1) (AtomId 3))
-      , singleCovalentSystem 3 (Edge (AtomId 1) (AtomId 4))
-      , singleCovalentSystem 4 (Edge (AtomId 1) (AtomId 5))
+      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)
+      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 3))) Nothing)
+      , (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 4))) Nothing)
+      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 5))) Nothing)
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
-
-singleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
-singleCovalentSystem systemId edge =
-  (SystemId systemId, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)
-
-doubleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
-doubleCovalentSystem systemId edge =
-  (SystemId systemId, mkBondingSystem (NonNegative 4) (S.singleton edge) Nothing)

@@ -9,7 +9,6 @@ import qualified Data.Set as S
 
 import Chem.Dietz
     ( AtomId(..)
-    , BondingSystem
     , Edge(..)
   , NonNegative(..)
   , SystemId(..)
@@ -49,18 +48,18 @@ benzene = Molecule
         , (AtomId 12, Atom { atomID = AtomId 12, attributes = elementAttributes H, coordinate = Coordinate (mkAngstrom 2.1577) (mkAngstrom 1.2245) (mkAngstrom 0.0), shells = defaultShells (elementAttributes H), formalCharge = 0 })
         ]
   , systems =
-      [ singleCovalentSystem 1 (Edge (AtomId 1) (AtomId 2))
-      , singleCovalentSystem 2 (Edge (AtomId 1) (AtomId 6))
-      , singleCovalentSystem 3 (Edge (AtomId 1) (AtomId 7))
-      , singleCovalentSystem 4 (Edge (AtomId 2) (AtomId 3))
-      , singleCovalentSystem 5 (Edge (AtomId 2) (AtomId 8))
-      , singleCovalentSystem 6 (Edge (AtomId 3) (AtomId 4))
-      , singleCovalentSystem 7 (Edge (AtomId 3) (AtomId 9))
-      , singleCovalentSystem 8 (Edge (AtomId 4) (AtomId 5))
-      , singleCovalentSystem 9 (Edge (AtomId 4) (AtomId 10))
-      , singleCovalentSystem 10 (Edge (AtomId 5) (AtomId 6))
-      , singleCovalentSystem 11 (Edge (AtomId 5) (AtomId 11))
-      , singleCovalentSystem 12 (Edge (AtomId 6) (AtomId 12))
+      [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)
+      , (SystemId 2, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 6))) Nothing)
+      , (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 7))) Nothing)
+      , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 3))) Nothing)
+      , (SystemId 5, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 8))) Nothing)
+      , (SystemId 6, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 3) (AtomId 4))) Nothing)
+      , (SystemId 7, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 3) (AtomId 9))) Nothing)
+      , (SystemId 8, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 4) (AtomId 5))) Nothing)
+      , (SystemId 9, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 4) (AtomId 10))) Nothing)
+      , (SystemId 10, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 5) (AtomId 6))) Nothing)
+      , (SystemId 11, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 5) (AtomId 11))) Nothing)
+      , (SystemId 12, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 6) (AtomId 12))) Nothing)
       , (SystemId 13, mkBondingSystem (NonNegative 6) (S.fromList [Edge (AtomId 1) (AtomId 2), Edge (AtomId 1) (AtomId 6), Edge (AtomId 2) (AtomId 3), Edge (AtomId 3) (AtomId 4), Edge (AtomId 4) (AtomId 5), Edge (AtomId 5) (AtomId 6)]) (Just "pi_ring"))
       ]
   , smilesStereochemistry = emptySmilesStereochemistry
@@ -69,7 +68,3 @@ benzene = Molecule
 
 benzenePretty :: Molecule
 benzenePretty = benzene
-
-singleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
-singleCovalentSystem systemId edge =
-  (SystemId systemId, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)

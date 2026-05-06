@@ -76,6 +76,7 @@ usage = unlines
   , "  stack run moladtbayes -- parse-smiles \"c1ccccc1\""
   , "  stack run moladtbayes -- parse-sdf-timing path/to/file.sdf_or_sdf_directory"
   , "  stack run moladtbayes -- parse-sdf-timing path/to/file.sdf_or_sdf_directory 1000"
+  , "  stack run moladtbayes -- pretty-example benzene"
   , "  stack run moladtbayes -- pretty-example morphine"
   , "  stack run moladtbayes -- pretty-example ferrocene --viewer-output results/viewer/ferrocene.viewer.html"
   , "  stack run moladtbayes -- view-examples --output results/viewer/haskell-examples.viewer.html --open-viewer"
@@ -159,7 +160,7 @@ runPrettyExample rawName rawArgs =
           putStrLn $
             "Unknown built-in example `"
             ++ rawName
-            ++ "`. Choose one of: diborane, ferrocene, morphine."
+            ++ "`. Choose one of: benzene, diborane, ferrocene, morphine."
         Just (title, note, molecule) -> do
           putStrLn title
           putStrLn note
@@ -503,6 +504,12 @@ printSmiles label molecule =
 lookupPrettyExample :: String -> Maybe (String, String, Molecule)
 lookupPrettyExample rawName =
   case map Char.toLower rawName of
+    "benzene" ->
+      Just
+        ( "Benzene (C6H6)"
+        , "Dietz-style ADT with each sigma edge as an unnamed 2e bonding system plus a six-electron pi_ring system."
+        , benzenePretty
+        )
     "diborane" ->
       Just
         ( "Diborane (B2H6)"

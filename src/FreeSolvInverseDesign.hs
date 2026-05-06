@@ -1353,10 +1353,9 @@ seedMolecule SeedWater =
           , (AtomId 3, seedAtom 3 H (-0.32) 0.90 0.00)
           ]
     , systems =
-        singleCovalentSystems 1
-          [ mkEdge (AtomId 1) (AtomId 2)
-          , mkEdge (AtomId 1) (AtomId 3)
-          ]
+        [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 2))) Nothing)
+        , (SystemId 2, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 3))) Nothing)
+        ]
     , smilesStereochemistry = emptySmilesStereochemistry
     }
 seedMolecule SeedMethane =
@@ -1370,20 +1369,13 @@ seedMolecule SeedMethane =
           , (AtomId 5, seedAtom 5 H 0.63 (-0.63) (-0.63))
           ]
     , systems =
-        singleCovalentSystems 1
-          [ mkEdge (AtomId 1) (AtomId 2)
-          , mkEdge (AtomId 1) (AtomId 3)
-          , mkEdge (AtomId 1) (AtomId 4)
-          , mkEdge (AtomId 1) (AtomId 5)
-          ]
+        [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 2))) Nothing)
+        , (SystemId 2, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 3))) Nothing)
+        , (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 4))) Nothing)
+        , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (mkEdge (AtomId 1) (AtomId 5))) Nothing)
+        ]
     , smilesStereochemistry = emptySmilesStereochemistry
     }
-
-singleCovalentSystems :: Int -> [Edge] -> [(SystemId, BondingSystem)]
-singleCovalentSystems start edges =
-  [ (SystemId (start + offset), mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)
-  | (offset, edge) <- zip [0 ..] edges
-  ]
 
 seedAtom :: Integer -> AtomicSymbol -> Double -> Double -> Double -> Atom
 seedAtom atomNumber atomSymbol xValue yValue zValue =

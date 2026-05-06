@@ -18,7 +18,7 @@ stack run moladtbayes -- --help
 | `view-examples` | Write one viewer page containing the built-in Haskell molecules. |
 | `parse-smiles <text>` | Parse the conservative SMILES subset into MolADT. |
 | `to-smiles <sdf>` | Render validated classical MolADT structures to supported SMILES. |
-| `pretty-example <name>` | Print built-in `morphine`, `diborane`, or `ferrocene`; add `--viewer-output` to export HTML. |
+| `pretty-example <name>` | Print built-in `benzene`, `morphine`, `diborane`, or `ferrocene`; add `--viewer-output` to export HTML. |
 | `infer-benchmark <prefix> <method> [limit]` | Run the Haskell FreeSolv benchmark consumer. |
 | `inverse-design --target <value> --seed-molecule <name>` | Run the small typed FreeSolv inverse-design search. |
 
@@ -32,6 +32,7 @@ stack run moladtbayes -- view-html molecules/benzene.sdf --output results/viewer
 stack run moladtbayes -- view-html benzene.moladt.json --format json --output results/viewer/benzene.viewer.html
 stack run moladtbayes -- view-examples --output results/viewer/haskell-examples.viewer.html
 stack run moladtbayes -- parse-smiles "c1ccccc1"
+stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/benzene.viewer.html
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water

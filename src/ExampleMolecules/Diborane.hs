@@ -8,7 +8,6 @@ import qualified Data.Set as S
 
 import Chem.Dietz
     ( AtomId(..)
-    , BondingSystem
     , Edge(..)
   , NonNegative(..)
   , SystemId(..)
@@ -47,15 +46,11 @@ diboranePretty = Molecule
       [ (SystemId 1, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 3), Edge (AtomId 2) (AtomId 3)]) (Just "bridge_h3_3c2e"))
       , (SystemId 2, mkBondingSystem (NonNegative 2) (S.fromList [Edge (AtomId 1) (AtomId 4), Edge (AtomId 2) (AtomId 4)]) (Just "bridge_h4_3c2e"))
       ]
-        ++ [ singleCovalentSystem 3 (Edge (AtomId 1) (AtomId 2))
-           , singleCovalentSystem 4 (Edge (AtomId 1) (AtomId 5))
-           , singleCovalentSystem 5 (Edge (AtomId 1) (AtomId 6))
-           , singleCovalentSystem 6 (Edge (AtomId 2) (AtomId 7))
-           , singleCovalentSystem 7 (Edge (AtomId 2) (AtomId 8))
+        ++ [ (SystemId 3, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 2))) Nothing)
+           , (SystemId 4, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 5))) Nothing)
+           , (SystemId 5, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 1) (AtomId 6))) Nothing)
+           , (SystemId 6, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 7))) Nothing)
+           , (SystemId 7, mkBondingSystem (NonNegative 2) (S.singleton (Edge (AtomId 2) (AtomId 8))) Nothing)
            ]
   , smilesStereochemistry = emptySmilesStereochemistry
   }
-
-singleCovalentSystem :: Int -> Edge -> (SystemId, BondingSystem)
-singleCovalentSystem systemId edge =
-  (SystemId systemId, mkBondingSystem (NonNegative 2) (S.singleton edge) Nothing)

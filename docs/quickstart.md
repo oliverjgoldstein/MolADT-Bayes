@@ -17,6 +17,7 @@ If Stack is missing, the Makefile explains how to install it.
 ```bash
 stack run moladtbayes -- parse molecules/benzene.sdf
 stack run moladtbayes -- parse-smiles "c1ccccc1"
+stack run moladtbayes -- pretty-example benzene
 stack run moladtbayes -- pretty-example ferrocene
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
 make haskell-viewer
