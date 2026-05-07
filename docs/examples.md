@@ -10,7 +10,7 @@ The examples show why MolADT is useful as typed data.
 | Water | `stack run moladtbayes -- parse molecules/water.sdf` | small validated SDF example |
 | Morphine | `stack run moladtbayes -- pretty-example morphine` | fused topology and stereo annotations |
 | Diborane | `stack run moladtbayes -- pretty-example diborane` | two explicit `3c-2e` bridge systems |
-| Ferrocene | `stack run moladtbayes -- pretty-example ferrocene` | Cp pi systems and Fe-centred bonding pool |
+| Ferrocene | `stack run moladtbayes -- pretty-example ferrocene` | Fe-centred Cp delocalised systems |
 | Sodium chloride | `stack run moladtbayes -- pretty-example sodium_chloride` | atom formal charges plus one 0e `ionic` edge system |
 
 Add `--viewer-output <path>` to any built-in example when you want an HTML

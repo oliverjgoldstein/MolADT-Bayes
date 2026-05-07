@@ -93,6 +93,7 @@ moleculeViewerPayload title molecule =
         , "label" .= T.pack ("#" ++ show rawId ++ " " ++ labelText)
         , "tag" .= fmap T.pack (tag bondingSystem)
         , "sharedElectrons" .= getNN (sharedElectrons bondingSystem)
+        , "kind" .= T.pack (viewerSystemKind bondingSystem)
         , "color" .= T.pack (systemColor rawId bondingSystem)
         , "atoms" .= map atomIdValue (S.toAscList (memberAtoms bondingSystem))
         , "edges" .= map systemEdgePayload (S.toAscList (memberEdges bondingSystem))
@@ -107,7 +108,14 @@ moleculeViewerPayload title molecule =
         Nothing ->
           case covalentLabel bondingSystem of
             Just label -> Just label
-            Nothing -> tag bondingSystem
+            Nothing -> fmap (const "delocalised bonding") (tag bondingSystem)
+
+    viewerSystemKind :: BondingSystem -> String
+    viewerSystemKind bondingSystem =
+      case standardSystemKey bondingSystem of
+        Just "ionic" -> "ionic"
+        Just _ -> "covalent"
+        Nothing -> "delocalised"
 
     ionicLabel :: BondingSystem -> Maybe String
     ionicLabel bondingSystem
@@ -566,6 +574,7 @@ viewerHTML title payloadValue =
     , "        label: systemLabel(id, tag, sharedElectrons, edges),"
     , "        tag: tag,"
     , "        sharedElectrons: sharedElectrons,"
+    , "        kind: system.kind || systemKind(tag, sharedElectrons, edges),"
     , "        color: system.color || systemColor(id, tag, sharedElectrons, edges, index),"
     , "        atoms: (system.member_atoms || system.atoms || []).map(idValue),"
     , "        edges: edges"
@@ -596,7 +605,7 @@ viewerHTML title payloadValue =
     , "  }"
     , "  function systemLabel(id, tag, sharedElectrons, edges) {"
     , "    const covalent = covalentLabel(tag, sharedElectrons, edges);"
-    , "    const display = covalent || tag;"
+    , "    const display = covalent || (tag ? 'delocalised bonding' : null);"
     , "    return display ? `#${id} ${display}` : `#${id}`;"
     , "  }"
     , "  function covalentLabel(tag, sharedElectrons, edges) {"
@@ -626,11 +635,17 @@ viewerHTML title payloadValue =
     , "    const offset = Number.isFinite(index) ? index : Number(id || 1) - 1;"
     , "    return extraSystemColors[((offset % extraSystemColors.length) + extraSystemColors.length) % extraSystemColors.length];"
     , "  }"
+    , "  function systemKind(tag, sharedElectrons, edges) {"
+    , "    const key = standardSystemKey(tag, sharedElectrons, edges);"
+    , "    if (key === 'ionic') return 'ionic';"
+    , "    if (key) return 'covalent';"
+    , "    return 'delocalised';"
+    , "  }"
     , "  function isStandardCovalentSystem(system) {"
     , "    return !!standardCovalentLineCount(system);"
     , "  }"
     , "  function displaySystems(systems) {"
-    , "    return (systems || []).filter(function (system) { return !isStandardCovalentSystem(system); });"
+    , "    return systems || [];"
     , "  }"
     , "  function standardCovalentLineCount(system) {"
     , "    if (!system) return 0;"
@@ -787,6 +802,7 @@ viewerHTML title payloadValue =
     , "    ctx.globalAlpha = options.alpha == null ? 1 : options.alpha;"
     , "    ctx.lineWidth = options.width || 2;"
     , "    ctx.lineCap = 'round';"
+    , "    if (options.dash) ctx.setLineDash(options.dash);"
     , "    const gradient = ctx.createLinearGradient(a.x + ox, a.y + oy, b.x + ox, b.y + oy);"
     , "    gradient.addColorStop(0, options.colorA || color);"
     , "    gradient.addColorStop(1, options.colorB || color);"
@@ -811,7 +827,8 @@ viewerHTML title payloadValue =
     , "        alpha: options.alpha,"
     , "        width: options.width,"
     , "        colorA: options.colorA || options.color,"
-    , "        colorB: options.colorB || options.color"
+    , "        colorB: options.colorB || options.color,"
+    , "        dash: options.dash"
     , "      });"
     , "    });"
     , "  }"
@@ -895,7 +912,8 @@ viewerHTML title payloadValue =
     , "          drawEdge(projected.get(edge.a), projected.get(edge.b), edgeColor, {"
     , "            offset: laneOffset,"
     , "            alpha: active ? 1 : 0.18,"
-    , "            width: active ? 4 : 2"
+    , "            width: active ? 4 : 2,"
+    , "            dash: active ? [10, 7] : [8, 8]"
     , "          });"
     , "        });"
     , "      });"
@@ -1006,7 +1024,7 @@ viewerHTML title payloadValue =
     , "      name.textContent = system.label || `system ${system.id}`;"
     , "      const meta = document.createElement('span');"
     , "      meta.className = 'system-meta';"
-    , "      meta.textContent = `${system.sharedElectrons}e, ${system.edges.length} edges`;"
+    , "      meta.textContent = `${system.kind || 'system'}${system.tag ? ', ' + system.tag : ''}, ${system.sharedElectrons}e, ${system.edges.length} edges`;"
     , "      button.appendChild(swatch);"
     , "      button.appendChild(name);"
     , "      button.appendChild(meta);"

@@ -115,8 +115,10 @@ in ionic bonding systems get an additional boost, and ionic edges draw a
 blue-to-red gradient between charged atoms.
 The CLI prints a portable `file://` URL for the written viewer, so the
 same output works as a manual fallback if OS auto-open fails. Ordinary covalent
-edges are dark grey single/double/triple/quadruple line sets and are not
-repeated as page labels; non-standard systems use a separate coloured overlay.
+edges are dark grey single/double/triple/quadruple line sets and the side panel
+labels those one-edge systems as single, double, triple, or quadruple covalent;
+non-standard systems are labelled as delocalised bonding and use dashed coloured
+overlays.
 
 ## SMILES To MolADT
 

@@ -21,6 +21,7 @@ import Chem.Dietz
 import Chem.Validate (validateMolecule)
 import ExampleMolecules.Diborane (diboranePretty)
 import ExampleMolecules.Benzene (benzenePretty)
+import ExampleMolecules.Ferrocene (ferrocenePretty)
 import ExampleMolecules.Morphine (morphinePretty, morphineRingClosureSmiles)
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy.Char8 as BL8
@@ -443,7 +444,7 @@ spec = do
       html `shouldContain` "drawBondLines"
       html `shouldContain` "chargeGradientForEdge"
       html `shouldContain` "displaySystems"
-      html `shouldNotContain` "setLineDash"
+      html `shouldContain` "setLineDash"
 
     it "uses grey covalent systems and colored non-standard bonding systems" $ do
       let payloadText title molecule = BL8.unpack (A.encode (moleculeViewerPayload title molecule))
@@ -461,6 +462,11 @@ spec = do
       quadruple `shouldContain` "#374151"
       ionic `shouldContain` "#0f766e"
       payloadText "Benzene" benzenePretty `shouldSatisfy` \text -> any (`isInfixOf` text) extraColors
+
+    it "labels ferrocene Cp systems as delocalised bonding in the viewer payload" $ do
+      let payloadText = BL8.unpack (A.encode (moleculeViewerPayload "Ferrocene" ferrocenePretty))
+      payloadText `shouldContain` "delocalised bonding"
+      payloadText `shouldContain` "\"kind\":\"delocalised\""
 
     it "renders a collection viewer for multiple built-in molecules" $ do
       let html = moleculeViewerCollectionHTML "Example viewer" [("Diborane", diboranePretty), ("Morphine", morphinePretty)]

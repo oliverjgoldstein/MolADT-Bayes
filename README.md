@@ -105,8 +105,9 @@ around the molecule without hiding the molecule fields.
   formal-charge magnitude, atoms in ionic bonding systems get an additional
   boost, and ionic edges draw a charge gradient.
   Ordinary covalent edges are dark grey one/two/three/four-line strokes for
-  single/double/triple/quadruple bonds and are not repeated as page labels;
-  non-standard systems use a separate coloured overlay.
+  single/double/triple/quadruple bonds, with those one-edge systems labelled in
+  the side panel; non-standard systems are labelled as delocalised bonding and
+  use dashed coloured overlays.
 - **Algebraic contracts**: rotations, atom relabelings, or other transforms can
   be expressed with type classes as groups acting on molecules, giving
   geometric models a clear place to state invariance and equivariance.

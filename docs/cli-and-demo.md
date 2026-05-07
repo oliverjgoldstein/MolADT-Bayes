@@ -50,10 +50,11 @@ blue/red halos around charged atoms; halo size and opacity scale with
 formal-charge magnitude, atoms in ionic bonding systems get an additional
 boost, and ionic edges draw a blue-to-red gradient between charged atoms.
 Ordinary covalent edges are dark grey one/two/three/four
-line sets for single/double/triple/quadruple bonds; pi, bridge, coordination,
-and other non-standard systems use a separate coloured overlay. Ordinary
-covalent systems are not repeated as page labels. It can also load the shared
-MolADT JSON files by drag and drop.
+line sets for single/double/triple/quadruple bonds; the side panel labels those
+one-edge systems as `single covalent`, `double covalent`, `triple covalent`, or
+`quadruple covalent`. Pi, bridge, coordination, and other non-standard systems
+are labelled as delocalised bonding and use dashed coloured overlays. It can
+also load the shared MolADT JSON files by drag and drop.
 
 ```bash
 make view

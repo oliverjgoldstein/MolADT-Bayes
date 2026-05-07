@@ -75,7 +75,7 @@ Examples:
 | --- | --- | --- |
 | Benzene | aromatic shorthand | one-edge `single covalent` systems plus an explicit `pi_ring` system |
 | Diborane | bridge bonding | four terminal B-H `single covalent` systems plus two `3c-2e` systems |
-| Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Cp pi systems, an Fe-Cp coordination system, and formal charges (`Fe#1 +2`, one `-1` carbon per Cp ring) |
+| Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Fe-centred Cp delocalised systems and formal charges (`Fe#1 +2`, one `-1` carbon per Cp ring) |
 | Sodium chloride | ionic charges | `Na+` and `Cl-` atoms plus one 0e `ionic` system over the Na-Cl edge |
 | Morphine | fused ring bookkeeping | every edge as a system plus stereo annotations |
 
@@ -91,8 +91,9 @@ stack run moladtbayes -- pretty-example morphine
 ```
 
 The ferrocene source uses one atom table and explicit Dietz systems. Conventional
-C-C and C-H edges are one-edge `single covalent` systems; the named bonding
-systems are direct `S.fromList` values:
+C-C and C-H edges are one-edge `single covalent` systems; each named Cp
+delocalised system spans its ring C-C edges and the Fe-C contacts to the central
+iron:
 
 ```haskell
 systems =
@@ -105,6 +106,11 @@ systems =
           , Edge (AtomId 3) (AtomId 4)
           , Edge (AtomId 4) (AtomId 5)
           , Edge (AtomId 5) (AtomId 6)
+          , Edge (AtomId 1) (AtomId 2)
+          , Edge (AtomId 1) (AtomId 3)
+          , Edge (AtomId 1) (AtomId 4)
+          , Edge (AtomId 1) (AtomId 5)
+          , Edge (AtomId 1) (AtomId 6)
           ])
         (Just "cp1_pi")
     )
@@ -117,25 +123,13 @@ systems =
           , Edge (AtomId 8) (AtomId 9)
           , Edge (AtomId 9) (AtomId 10)
           , Edge (AtomId 10) (AtomId 11)
-          ])
-        (Just "cp2_pi")
-    )
-  , ( SystemId 3
-    , mkBondingSystem
-        (NonNegative 12)
-        (S.fromList
-          [ Edge (AtomId 1) (AtomId 2)
-          , Edge (AtomId 1) (AtomId 3)
-          , Edge (AtomId 1) (AtomId 4)
-          , Edge (AtomId 1) (AtomId 5)
-          , Edge (AtomId 1) (AtomId 6)
           , Edge (AtomId 1) (AtomId 7)
           , Edge (AtomId 1) (AtomId 8)
           , Edge (AtomId 1) (AtomId 9)
           , Edge (AtomId 1) (AtomId 10)
           , Edge (AtomId 1) (AtomId 11)
           ])
-        (Just "fe_cp_coordination")
+        (Just "cp2_pi")
     )
   ]
 ```

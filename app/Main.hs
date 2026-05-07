@@ -537,7 +537,7 @@ lookupPrettyExample rawName =
     "ferrocene" ->
       Just
         ( "Ferrocene (Fe(C5H5)2)"
-          , "Dietz-style ADT with two cyclopentadienyl pi systems and an Fe-Cp coordination system."
+          , "Dietz-style ADT with two Fe-centred cyclopentadienyl delocalised systems."
         , ferrocenePretty
         )
     "sodium-chloride" ->
