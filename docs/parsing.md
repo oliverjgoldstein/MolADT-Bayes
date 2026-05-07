@@ -117,8 +117,10 @@ The CLI prints a portable `file://` URL for the written viewer, so the
 same output works as a manual fallback if OS auto-open fails. Ordinary covalent
 edges are dark grey single/double/triple/quadruple line sets and the side panel
 labels those one-edge systems as single, double, triple, or quadruple covalent;
-non-standard systems are labelled as delocalised bonding and use dashed coloured
-overlays.
+when an edge belongs to multiple bonding systems, each system overlay gets a
+dashed lane, including ordinary covalent versus delocalised overlap in
+ferrocene. Non-standard systems are labelled as delocalised bonding and use
+coloured dashed overlays.
 
 ## SMILES To MolADT
 

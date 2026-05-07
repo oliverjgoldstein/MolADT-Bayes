@@ -52,9 +52,12 @@ boost, and ionic edges draw a blue-to-red gradient between charged atoms.
 Ordinary covalent edges are dark grey one/two/three/four
 line sets for single/double/triple/quadruple bonds; the side panel labels those
 one-edge systems as `single covalent`, `double covalent`, `triple covalent`, or
-`quadruple covalent`. Pi, bridge, coordination, and other non-standard systems
-are labelled as delocalised bonding and use dashed coloured overlays. It can
-also load the shared MolADT JSON files by drag and drop.
+`quadruple covalent`. When an edge belongs to multiple bonding systems, each
+system overlay gets a dashed lane, including ordinary covalent versus
+delocalised overlap in ferrocene. Pi, bridge, coordination, and other
+non-standard systems are labelled as delocalised bonding and use coloured
+dashed overlays. It can also load the shared MolADT JSON files by drag and
+drop.
 
 ```bash
 make view

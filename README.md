@@ -19,7 +19,8 @@ Molecule = atoms + bonding systems + stereochemistry
 [Quickstart](docs/quickstart.md) | [ADT](docs/data-model.md) |
 [Representation](docs/representation.md) | [Examples](docs/examples.md) |
 [Equality](docs/molecule-equality.md) | [CLI](docs/cli-and-demo.md) |
-[Viewer](docs/parsing.md#viewer) | [Inference](docs/inference.md)
+[Viewer](docs/parsing.md#viewer) | [Validator](#validator) |
+[Inference](docs/inference.md)
 
 ## Why MolADT
 
@@ -106,8 +107,10 @@ around the molecule without hiding the molecule fields.
   boost, and ionic edges draw a charge gradient.
   Ordinary covalent edges are dark grey one/two/three/four-line strokes for
   single/double/triple/quadruple bonds, with those one-edge systems labelled in
-  the side panel; non-standard systems are labelled as delocalised bonding and
-  use dashed coloured overlays.
+  the side panel. When an edge belongs to more than one bonding system, each
+  system overlay gets a dashed lane, including ordinary covalent versus
+  delocalised overlap in ferrocene; non-standard systems are labelled as
+  delocalised bonding and use coloured dashed overlays.
 - **Algebraic contracts**: rotations, atom relabelings, or other transforms can
   be expressed with type classes as groups acting on molecules, giving
   geometric models a clear place to state invariance and equivariance.
@@ -129,6 +132,27 @@ structured values:
 
 That is the point of the ADT: Bayesian inference and inverse design can work on
 the molecule itself, not a notation that has to be decoded on every move.
+
+## Validator
+
+`validateMolecule` is a representation validator, not a physical chemistry
+oracle. It rejects malformed MolADT values before parsing, viewing,
+serialization, benchmark consumption, or inverse-design scoring continue.
+
+It checks that atom map keys match `atomID`, atom IDs and system IDs are
+positive, coordinates and element metadata are finite, system IDs are unique,
+bonding systems are non-empty and reference existing atoms, cached member atoms
+match member edges, duplicate bonding systems are absent, and SMILES
+stereochemistry annotations only point at known atoms. It also enforces the
+MolADT edge contract: ordinary one-edge covalent systems with `2`, `4`, `6`, or
+`8` shared electrons must be unnamed and display as single/double/triple/
+quadruple covalent bonds; one-edge `0e` systems must be tagged `ionic`; and
+`ionic` systems must share zero electrons over exactly one edge.
+
+It deliberately does not prove physical realism, infer missing hydrogens,
+choose protonation states, or decide whether a delocalised system is chemically
+preferred. Those are task-level constraints layered on top of the representation
+validator.
 
 ## Start
 

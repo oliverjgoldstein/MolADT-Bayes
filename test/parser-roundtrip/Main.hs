@@ -445,6 +445,9 @@ spec = do
       html `shouldContain` "chargeGradientForEdge"
       html `shouldContain` "displaySystems"
       html `shouldContain` "setLineDash"
+      html `shouldContain` "const lanes = systemEdgeLaneMap(payload.systems);"
+      html `shouldContain` "if (!selected && !overlapping) return;"
+      html `shouldContain` "dash: overlapping ? [7, 6] : null"
 
     it "uses grey covalent systems and colored non-standard bonding systems" $ do
       let payloadText title molecule = BL8.unpack (A.encode (moleculeViewerPayload title molecule))

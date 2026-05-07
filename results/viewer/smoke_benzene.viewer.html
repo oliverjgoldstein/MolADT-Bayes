@@ -607,25 +607,26 @@ h1 { margin: 0; font-size: 24px; line-height: 1.08; letter-spacing: 0; }
       });
     });
     if (state.systems) {
-      const lanes = systemEdgeLaneMap(payload.systems.filter(function (system) { return !isStandardCovalentSystem(system); }));
+      const lanes = systemEdgeLaneMap(payload.systems);
       payload.systems.forEach(function (system) {
         const selected = state.selectedSystem === system.id;
         const active = state.selectedSystem == null || selected;
         system.edges.forEach(function (edge) {
+          const laneIds = lanes.get(edgeKey(edge.a, edge.b)) || [system.id];
+          const overlapping = laneIds.length > 1;
+          const lane = Math.max(0, laneIds.indexOf(system.id));
+          const laneOffset = overlapping ? (lane - (laneIds.length - 1) / 2) * 7 : 0;
           if (isIonicSystem(system)) {
             const gradient = chargeGradientForEdge(atomMap, edge);
-            drawBondLines(projected.get(edge.a), projected.get(edge.b), { lineCount: 1, width: active ? 4 : 2.5, spacing: 5.2, colorA: gradient.colorA, colorB: gradient.colorB, alpha: active ? 0.95 : 0.22 });
+            drawBondLines(projected.get(edge.a), projected.get(edge.b), { lineCount: 1, width: active ? 4 : 2.5, spacing: 5.2, colorA: gradient.colorA, colorB: gradient.colorB, alpha: active ? 0.95 : 0.22, dash: overlapping ? [7, 6] : null, offset: laneOffset });
             return;
           }
           const covalentLines = standardCovalentLineCount(system);
           if (covalentLines) {
-            if (!selected) return;
-            drawBondLines(projected.get(edge.a), projected.get(edge.b), { lineCount: covalentLines, width: 2.9, spacing: 5.6, color: covalentBondColor, alpha: 0.98 });
+            if (!selected && !overlapping) return;
+            drawBondLines(projected.get(edge.a), projected.get(edge.b), { lineCount: covalentLines, width: 2.9, spacing: 5.6, color: covalentBondColor, alpha: selected ? 0.98 : 0.58, dash: overlapping ? [7, 6] : null, offset: laneOffset });
             return;
           }
-          const laneIds = lanes.get(edgeKey(edge.a, edge.b)) || [system.id];
-          const lane = Math.max(0, laneIds.indexOf(system.id));
-          const laneOffset = (lane - (laneIds.length - 1) / 2) * 7;
           const edgeColor = system.color;
           drawEdge(projected.get(edge.a), projected.get(edge.b), edgeColor, {
             offset: laneOffset,
