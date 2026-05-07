@@ -492,6 +492,10 @@ spec = do
       take 7 uri `shouldBe` "file://"
       uri `shouldContain` "diborane%20viewer.html"
 
+    it "reports Windows file URLs for WSL drive paths" $ do
+      uri <- moleculeViewerURI "/mnt/c/Users/samma/Documents/MolADT/MolADT-Bayes-Python/results/viewer/examples viewer.html"
+      uri `shouldBe` "file:///C:/Users/samma/Documents/MolADT/MolADT-Bayes-Python/results/viewer/examples%20viewer.html"
+
     it "returns False when the configured viewer opener is unavailable" $ do
       tempDir <- getTemporaryDirectory
       (path, handle) <- openTempFile tempDir "moladt-viewer"

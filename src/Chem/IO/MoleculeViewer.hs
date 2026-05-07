@@ -1156,10 +1156,24 @@ moleculeViewerURI :: FilePath -> IO String
 moleculeViewerURI path = do
   absolute <- makeAbsolute path
   let slashPath = map normaliseSeparator absolute
-  pure (fileUriPrefix slashPath ++ percentEncodePath (uriPath slashPath))
+  pure $
+    case wslDriveURI slashPath of
+      Just uri -> uri
+      Nothing -> fileUriPrefix slashPath ++ percentEncodePath (uriPath slashPath)
   where
     normaliseSeparator '\\' = '/'
     normaliseSeparator c = c
+    wslDriveURI ('/' : 'm' : 'n' : 't' : '/' : drive : rest)
+      | isDriveLetter drive && isDriveBoundary rest =
+          Just ("file:///" ++ [toUpper drive] ++ ":/" ++ percentEncodePath (dropDriveSlash rest))
+    wslDriveURI _ = Nothing
+    isDriveLetter c =
+      isAscii c && (('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z'))
+    isDriveBoundary [] = True
+    isDriveBoundary ('/' : _) = True
+    isDriveBoundary _ = False
+    dropDriveSlash ('/' : rest) = rest
+    dropDriveSlash rest = rest
     fileUriPrefix ('/' : '/' : _) = "file://"
     fileUriPrefix ('/' : _) = "file://"
     fileUriPrefix _ = "file:///"
