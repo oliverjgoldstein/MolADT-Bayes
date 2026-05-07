@@ -548,14 +548,18 @@ h1 { margin: 0; font-size: 24px; line-height: 1.08; letter-spacing: 0; }
     charged.forEach(function (atom) {
       const point = projected.get(atom.id);
       if (!point) return;
-      const magnitude = Math.min(3, Math.abs(Number(atom.charge || 0)));
+      const strength = Math.min(5, Math.abs(Number(atom.charge || 0)));
       const ionic = ionicAtomIds && ionicAtomIds.has(atom.id);
-      const fieldRadius = ionic ? Math.max(120, point.radius * (9.8 + magnitude * 1.2)) : Math.max(46, point.radius * (4.3 + magnitude * 0.7));
+      const radiusFactor = ionic ? 10.5 + strength * 3.0 : 5.2 + strength * 2.2;
+      const centerAlpha = ionic ? Math.min(0.88, 0.50 + strength * 0.09) : Math.min(0.76, 0.22 + strength * 0.16);
+      const midAlpha = ionic ? Math.min(0.46, 0.22 + strength * 0.08) : Math.min(0.38, 0.07 + strength * 0.09);
+      const outerAlpha = ionic ? Math.min(0.18, 0.065 + strength * 0.035) : Math.min(0.16, 0.018 + strength * 0.035);
+      const fieldRadius = ionic ? Math.max(120, point.radius * radiusFactor) : Math.max(54, point.radius * radiusFactor);
       const color = chargeColor(atom.charge);
       const gradient = ctx.createRadialGradient(point.x, point.y, Math.max(3, point.radius * 0.7), point.x, point.y, fieldRadius);
-      gradient.addColorStop(0, hexToRgba(color, ionic ? 0.58 : 0.30));
-      gradient.addColorStop(0.48, hexToRgba(color, ionic ? 0.30 : 0.13));
-      gradient.addColorStop(0.82, hexToRgba(color, ionic ? 0.11 : 0.035));
+      gradient.addColorStop(0, hexToRgba(color, centerAlpha));
+      gradient.addColorStop(0.48, hexToRgba(color, midAlpha));
+      gradient.addColorStop(0.82, hexToRgba(color, outerAlpha));
       gradient.addColorStop(1, hexToRgba(color, 0));
       ctx.fillStyle = gradient;
       ctx.beginPath();

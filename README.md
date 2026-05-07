@@ -50,12 +50,13 @@ data Molecule = Molecule
   }
 ```
 
-`systems` is the canonical bonding layer. A conventional single, double,
-triple, or quadruple bond is a one-edge `BondingSystem` with `2`, `4`, `6`, or
-`8` shared electrons. Pretty printers and viewers display these as
+`systems` is the canonical Dietz bonding layer. A conventional single, double,
+triple, or quadruple bond is a one-edge Dietz `BondingSystem` with `2`, `4`,
+`6`, or `8` shared electrons. Pretty printers and viewers display these as
 `single covalent`, `double covalent`, `triple covalent`, or `quadruple covalent`.
-An ionic contact is also a one-edge `BondingSystem`, but it shares `0`
-electrons, displays as `ionic`, and stores formal charge on the atoms.
+In the Dietz representation an ionic contact is also a one-edge
+`BondingSystem`, but it shares `0` electrons, displays as `ionic`, and stores
+formal charge on the atoms rather than on the edge itself.
 Sodium chloride therefore has `Na#1` at `+1`, `Cl#2` at `-1`, and one 0e
 `ionic` system over the Na-Cl edge.
 Pretty printing derives display edges from the bonding systems and reports the
@@ -95,8 +96,9 @@ around the molecule without hiding the molecule fields.
   hydrogens, and bonding systems as typed concepts.
 - **Inspectable outputs**: the standalone viewer shows atoms, every edge, and
   explicit electron-sharing systems from the same typed payload. Charge renders
-  as blue/red halos around charged atoms; atoms in ionic bonding systems get
-  larger, more opaque charge gradients, and ionic edges draw a charge gradient.
+  as blue/red halos around charged atoms; halo size and opacity scale with
+  formal-charge magnitude, atoms in ionic bonding systems get an additional
+  boost, and ionic edges draw a charge gradient.
   Ordinary covalent edges are dark grey one/two/three/four-line strokes for
   single/double/triple/quadruple bonds and are not repeated as page labels;
   non-standard systems use a separate coloured overlay.
