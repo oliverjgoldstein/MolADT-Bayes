@@ -139,19 +139,31 @@ the molecule itself, not a notation that has to be decoded on every move.
 oracle. It rejects malformed MolADT values before parsing, viewing,
 serialization, benchmark consumption, or inverse-design scoring continue.
 
-It checks that atom map keys match `atomID`, atom IDs and system IDs are
-positive, coordinates and element metadata are finite, system IDs are unique,
-bonding systems are non-empty and reference existing atoms, cached member atoms
-match member edges, duplicate bonding systems are absent, and SMILES
-stereochemistry annotations only point at known atoms. It also enforces the
-MolADT edge contract: ordinary one-edge covalent systems with `2`, `4`, `6`, or
-`8` shared electrons must be unnamed and display as single/double/triple/
-quadruple covalent bonds; one-edge `0e` systems must be tagged `ionic`; and
-`ionic` systems must share zero electrons over exactly one edge.
+It checks:
 
-It deliberately does not prove physical realism, infer missing hydrogens,
-choose protonation states, or decide whether a delocalised system is chemically
-preferred. Those are task-level constraints layered on top of the representation
+- atom map keys match `atomID`
+- atom IDs and system IDs are positive
+- coordinates and element metadata are finite
+- system IDs are unique
+- bonding systems are non-empty
+- bonding-system edges reference existing atoms
+- cached member atoms match member edges
+- duplicate bonding systems are absent
+- SMILES stereochemistry annotations only point at known atoms
+- ordinary one-edge covalent systems with `2`, `4`, `6`, or `8` shared
+  electrons are unnamed and display as single/double/triple/quadruple covalent
+  bonds
+- one-edge `0e` systems are tagged `ionic`
+- `ionic` systems share zero electrons over exactly one edge
+
+It deliberately does not:
+
+- prove physical realism
+- infer missing hydrogens
+- choose protonation states
+- decide whether a delocalised system is chemically preferred
+
+Those are task-level constraints layered on top of the representation
 validator.
 
 ## Start
