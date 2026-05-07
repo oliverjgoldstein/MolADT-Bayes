@@ -8,7 +8,7 @@ The examples show why MolADT is useful as typed data.
 | --- | --- | --- |
 | Benzene | `stack run moladtbayes -- pretty-example benzene` | classical ring plus `pi_ring` system |
 | Water | `stack run moladtbayes -- parse molecules/water.sdf` | small validated SDF example |
-| Morphine | `stack run moladtbayes -- pretty-example morphine` | fused topology and stereo annotations |
+| Morphine | `stack run moladtbayes -- pretty-example morphine` | fused topology, a `double covalent` alkene edge, and stereo annotations |
 | Diborane | `stack run moladtbayes -- pretty-example diborane` | two explicit `3c-2e` bridge systems |
 | Ferrocene | `stack run moladtbayes -- pretty-example ferrocene` | Fe-centred Cp delocalised systems |
 | Sodium chloride | `stack run moladtbayes -- pretty-example sodium_chloride` | atom formal charges plus one 0e `ionic` edge system |
@@ -38,7 +38,7 @@ available to code.
 | Diborane | bridge bonding is compressed | explicit `3c-2e` systems |
 | Ferrocene | often split into ionic fragments | explicit sandwich-style bonding systems plus atom formal charges |
 | Sodium chloride | ionic state is implicit in charge notation | `Na+` and `Cl-` atoms plus one 0e `ionic` system |
-| Morphine | ring closures are digit bookkeeping | every edge as a bonding system plus stereo layer |
+| Morphine | ring closures are digit bookkeeping | every edge as a bonding system, including a `double covalent` alkene edge, plus stereo layer |
 
 For example, diborane is represented with named bridge systems:
 

@@ -474,6 +474,7 @@ spec = do
       html `shouldContain` "molecule-list"
       html `shouldContain` "Diborane"
       html `shouldContain` "Morphine"
+      html `shouldContain` "double covalent"
 
     it "writes viewer HTML into nested output directories" $ do
       tempDir <- getTemporaryDirectory
@@ -516,13 +517,22 @@ spec = do
       opened `shouldBe` False
 
   describe "Built-in Dietz examples" $ do
-    it "validates the explicit morphine example and preserves both systems" $ do
+    it "validates the explicit morphine example and preserves phenyl plus double covalent systems" $ do
       case validateMolecule morphinePretty of
         Left err -> expectationFailure err
         Right mol -> do
           S.size (moleculeEdges mol) `shouldBe` 25
-          map (tag . snd) (take 2 (systems mol)) `shouldBe` [Just "alkene_bridge", Just "phenyl_pi_ring"]
-          countUnnamedEdgeSystems 2 mol `shouldBe` 25
+          map (tag . snd) (take 1 (systems mol)) `shouldBe` [Just "phenyl_pi_ring"]
+          countUnnamedEdgeSystems 2 mol `shouldBe` 24
+          countUnnamedEdgeSystems 4 mol `shouldBe` 1
+          let doubleSystems =
+                [ systemId
+                | (systemId, system) <- systems mol
+                , tag system == Nothing
+                , getNN (sharedElectrons system) == 4
+                , memberEdges system == S.singleton (Edge (AtomId 5) (AtomId 6))
+                ]
+          doubleSystems `shouldBe` [SystemId 8]
           map
             (\item -> (stereoCenter item, stereoClass item, stereoConfiguration item, stereoToken item))
             (atomStereoAnnotations (smilesStereochemistry mol))

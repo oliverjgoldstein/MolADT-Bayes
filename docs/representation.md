@@ -77,7 +77,7 @@ Examples:
 | Diborane | bridge bonding | four terminal B-H `single covalent` systems plus two `3c-2e` systems |
 | Ferrocene | sandwich bonding | Cp/C-H `single covalent` systems plus Fe-centred Cp delocalised systems and formal charges (`Fe#1 +2`, one `-1` carbon per Cp ring) |
 | Sodium chloride | ionic charges | `Na+` and `Cl-` atoms plus one 0e `ionic` system over the Na-Cl edge |
-| Morphine | fused ring bookkeeping | every edge as a system plus stereo annotations |
+| Morphine | fused ring bookkeeping | every edge as a system, including a `double covalent` alkene edge, plus stereo annotations |
 
 ## Explicit Haskell Examples
 
