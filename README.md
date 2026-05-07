@@ -22,7 +22,7 @@ Molecule = atoms + bonding systems + stereochemistry
 [Quickstart](docs/quickstart.md) | [ADT](docs/data-model.md) |
 [Representation](docs/representation.md) | [Examples](docs/examples.md) |
 [Equality](docs/molecule-equality.md) | [CLI](docs/cli-and-demo.md) |
-[Viewer](docs/parsing.md#viewer) | [Validator](#validator) |
+[Parsing](docs/parsing.md) | [Viewer](docs/parsing.md#viewer) | [Validator](#validator) |
 [Inference](docs/inference.md)
 
 ## Why MolADT
