@@ -7,6 +7,11 @@ inspected, validated, serialized, and scored by probabilistic models.
 
 Boundary formats stay at the edge. The molecule stays in the ADT.
 
+<p align="center">
+  <img src="docs/assets/ferrocene.png" alt="Ferrocene in the MolADT viewer" width="280">
+  <img src="docs/assets/diborane.png" alt="Diborane in the MolADT viewer" width="280">
+</p>
+
 ```text
 Molecule = atoms + bonding systems + stereochemistry
 ```
