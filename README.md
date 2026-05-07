@@ -5,7 +5,10 @@
 MolADT is a compact Haskell representation for molecules that need to be
 inspected, validated, serialized, and scored by probabilistic models.
 
-Boundary formats stay at the edge. The molecule stays in the ADT.
+The boundary rule is:
+
+- boundary formats stay at the edge
+- the molecule stays in the ADT
 
 <p align="center">
   <img src="docs/assets/ferrocene.png" alt="Ferrocene in the MolADT viewer" width="280">
@@ -24,9 +27,12 @@ Molecule = atoms + bonding systems + stereochemistry
 
 ## Why MolADT
 
-String formats are useful for exchange. Plain graphs are useful for traversal.
-Neither is a great home for all of the chemistry a model may need to reason
-about.
+String formats and plain graphs are useful, but limited:
+
+- string formats are useful for exchange
+- plain graphs are useful for traversal
+- neither is a great home for all of the chemistry a model may need to reason
+  about
 
 MolADT keeps the important structure explicit:
 
@@ -38,11 +44,16 @@ MolADT keeps the important structure explicit:
 - shared JSON serialization for Haskell and the sibling Python repo
 - Haskell type classes for attaching laws and algebraic structure
 
-That gives inference and inverse-design code a molecule it can inspect directly,
-instead of a string it has to reinterpret at every step.
+That gives inference and inverse-design code:
 
-Read more in [MolADT ADT Representation](docs/data-model.md) and
-[MolADT Representation](docs/representation.md).
+- a molecule it can inspect directly
+- fewer repeated notation-decoding steps
+- a shared object for validation, descriptors, proposals, and scoring
+
+Read more:
+
+- [MolADT ADT Representation](docs/data-model.md)
+- [MolADT Representation](docs/representation.md)
 
 ## The Shape
 
@@ -56,37 +67,61 @@ data Molecule = Molecule
   }
 ```
 
-`systems` is the canonical Dietz bonding layer. A conventional single, double,
-triple, or quadruple bond is a one-edge Dietz `BondingSystem` with `2`, `4`,
-`6`, or `8` shared electrons. Pretty printers and viewers display these as
-`single covalent`, `double covalent`, `triple covalent`, or `quadruple covalent`.
-In the Dietz representation an ionic contact is also a one-edge
-`BondingSystem`, but it shares `0` electrons, displays as `ionic`, and stores
-formal charge on the atoms rather than on the edge itself.
-Sodium chloride therefore has `Na#1` at `+1`, `Cl#2` at `-1`, and one 0e
-`ionic` system over the Na-Cl edge.
-Pretty printing derives display edges from the bonding systems and reports the
-total electrons shared over each edge. For benzene, a C-C edge is shown as
-`shared=3e` and `order=1.50`: `2e` from the one-edge `single covalent` system plus
-`1e/edge` from the six-electron `pi_ring`. The viewer lists the same explicit
-bonding systems.
-System identifiers are stable display IDs. Checked examples and parsers put
-named or multi-edge systems first, so benzene uses `SystemId 1` for `pi_ring`
-and then numbers the ordinary one-edge covalent systems after it.
-Shells are optional on atoms, and `elementAttributes` now carries the default
-shell data used by simple constructors.
+`systems` is the canonical Dietz bonding layer:
 
-Use [`sameMolecule`](docs/molecule-equality.md) when you want equality modulo
-container ordering, such as maps, system lists, member-edge sets, and
-annotation lists. It keeps atom and system identifiers meaningful.
+- a single covalent bond is a one-edge `2e` `BondingSystem`
+- a double covalent bond is a one-edge `4e` `BondingSystem`
+- a triple covalent bond is a one-edge `6e` `BondingSystem`
+- a quadruple covalent bond is a one-edge `8e` `BondingSystem`
+- pretty printers and viewers display these as `single covalent`,
+  `double covalent`, `triple covalent`, and `quadruple covalent`
+- an ionic contact is a one-edge `0e` `BondingSystem`
+- ionic contacts display as `ionic`
+- formal charge stays on atoms rather than on the edge itself
 
-The point is not to replace SMILES or SDF. The point is to parse them into a
-typed structure where the chemistry is available as data.
+Sodium chloride therefore has:
 
-Because this is Haskell, the representation is not just a convention. `AtomId`,
-`SystemId`, `NonNegative`, and `Angstrom` are separate types; shells and
-orbitals are algebraic data types; and type classes can state behavior and laws
-around the molecule without hiding the molecule fields.
+- `Na#1` at `+1`
+- `Cl#2` at `-1`
+- one `0e` `ionic` system over the Na-Cl edge
+
+Pretty printing derives display edges from bonding systems:
+
+- each edge row reports the total electrons shared over that edge
+- each edge row reports the effective order
+- a benzene C-C edge is shown as `shared=3e` and `order=1.50`
+- that benzene value is `2e` from the one-edge `single covalent` system plus
+  `1e/edge` from the six-electron `pi_ring`
+- the viewer lists the same explicit bonding systems
+
+System identifiers are stable display IDs:
+
+- checked examples and parsers put named or multi-edge systems first
+- benzene uses `SystemId 1` for `pi_ring`
+- ordinary one-edge covalent systems are numbered after it
+
+Shells and equality:
+
+- shells are optional on atoms
+- `elementAttributes` carries the default shell data used by simple constructors
+- use [`sameMolecule`](docs/molecule-equality.md) for equality modulo container
+  ordering
+- `sameMolecule` ignores ordering of maps, system lists, member-edge sets, and
+  annotation lists
+- atom and system identifiers still remain meaningful
+
+The point is not to replace SMILES or SDF:
+
+- SMILES and SDF stay useful as boundary formats
+- parsers move those boundary formats into typed data
+- the chemistry is then available as explicit ADT fields
+
+Because this is Haskell, the representation is not just a convention:
+
+- `AtomId`, `SystemId`, `NonNegative`, and `Angstrom` are separate types
+- shells and orbitals are algebraic data types
+- type classes can state behavior and laws around the molecule
+- those laws do not require hiding the molecule fields
 
 ## What It Unlocks
 
@@ -115,23 +150,29 @@ around the molecule without hiding the molecule fields.
   be expressed with type classes as groups acting on molecules, giving
   geometric models a clear place to state invariance and equivariance.
 
-See [Example Molecules](docs/examples.md), [Parsing and Rendering](docs/parsing.md),
-and [Type Classes And Group Actions](docs/representation.md#type-classes-and-group-actions).
+See:
+
+- [Example Molecules](docs/examples.md)
+- [Parsing and Rendering](docs/parsing.md)
+- [Type Classes And Group Actions](docs/representation.md#type-classes-and-group-actions)
 
 ## Why It Helps Bayesian Work
 
 MolADT is useful as a general explicit typed generative model for Bayesian
-chemistry tasks. The model can generate, edit, validate, and score molecules as
-structured values:
+chemistry tasks. The model can work with molecules as structured values:
 
 - priors can be written over atoms, edges, charges, rings, and bonding systems
 - proposal kernels can make local typed edits instead of string rewrites
+- generated molecules can be validated before scoring
 - invalid chemistry can be rejected at the molecule boundary
 - likelihoods and descriptors can inspect the same explicit object
 - posterior samples can be serialized through the shared MolADT JSON contract
 
-That is the point of the ADT: Bayesian inference and inverse design can work on
-the molecule itself, not a notation that has to be decoded on every move.
+That is the point of the ADT:
+
+- Bayesian inference works on the molecule itself
+- inverse design works on the molecule itself
+- notation decoding happens at boundaries, not on every move
 
 ## Validator
 
@@ -214,18 +255,27 @@ make haskell-demo
 make haskell-infer-benchmark
 ```
 
-Viewer commands print both the HTML path and a portable `file://` URL. With
-`--open-viewer` or `OPEN_VIEWER=1`, the same URL is printed as the manual
-fallback if the operating system does not open a browser automatically.
+Viewer commands:
 
-The Haskell benchmark path is intentionally narrow: it consumes the Python
-`freesolv_moladt_featurized` export and runs a local exact RBF Gaussian process
-over the typed MolADT feature matrix. The Python repo owns the larger benchmark
-runner and paper artifacts.
+- print the HTML path
+- print a portable `file://` URL
+- use that URL as the manual fallback if OS auto-open fails
+- support `--open-viewer` and `OPEN_VIEWER=1`
+
+The Haskell benchmark path is intentionally narrow:
+
+- it consumes the Python `freesolv_moladt_featurized` export
+- it runs a local exact RBF Gaussian process
+- it works over the typed MolADT feature matrix
+- the Python repo owns the larger benchmark runner and paper artifacts
 
 ## Scope
 
-This repo is the typed Haskell implementation and aligned benchmark consumer.
+This repo is:
+
+- the typed Haskell implementation
+- the aligned benchmark consumer
+
 It includes:
 
 - the MolADT molecule ADT
@@ -234,6 +284,11 @@ It includes:
 - built-in typed molecule examples
 - a compact FreeSolv inference and inverse-design path
 
-For the full benchmark pipeline, data processing, figures, and Python-side
-experiments, use
-[MolADT-Bayes-Python](https://github.com/oliverjgoldstein/MolADT-Bayes-Python).
+For the Python side, use
+[MolADT-Bayes-Python](https://github.com/oliverjgoldstein/MolADT-Bayes-Python)
+for:
+
+- the full benchmark pipeline
+- data processing
+- figures
+- Python-side experiments
