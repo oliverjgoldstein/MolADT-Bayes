@@ -3,7 +3,8 @@
 The Haskell repo is the FreeSolv benchmark consumer.
 
 It does not own the full benchmark pipeline. Python writes the processed
-feature matrices. Haskell reads them and runs a local Bayesian model.
+`mol_id`/target exports. Haskell reads them, parses the matching SDF molecules,
+and runs the MolADT WL + bonding-system GP locally.
 
 ## Main Command
 
@@ -14,10 +15,21 @@ make haskell-infer-benchmark
 Direct form:
 
 ```bash
-stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
+stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+```
+
+The default command uses the repo-local seed-18 split:
+
+```bash
+stack run moladtbayes -- freesolv-wl-system-gp \
+  --split-json data/freesolv_wl_system_seed18_split.json
 ```
 
 ## Methods
+
+The default `freesolv-wl-system-gp` command is an exact empirical-Bayes GP. The
+older `infer-benchmark` consumer remains available for exported feature-matrix
+experiments.
 
 Accepted method strings:
 
@@ -36,9 +48,9 @@ stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized lwis:64 128
 The default Makefile path uses:
 
 ```text
-dataset_prefix=freesolv_moladt_featurized
-method=mh:0.2
-row_limit=full
+model=MolADT WL + bonding-system GP
+seed=18
+split_json=data/freesolv_wl_system_seed18_split.json
 ```
 
 ## What It Prints
@@ -59,6 +71,12 @@ After inference, it prints:
 - validation metrics
 - per-test-row predictions
 - test metrics
+
+The WL + bonding-system command prints the split source, train+valid and test
+counts, RMSE, MAE, R2, mean predictive standard deviation, and 90% coverage.
+It uses parsed MolADT molecules directly: element symbols, formal charges,
+shell/orbital occupancy, effective edge order, shared electrons, and
+bonding-system overlap all enter the token kernels.
 
 ## Data Location
 

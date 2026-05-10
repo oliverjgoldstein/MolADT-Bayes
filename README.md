@@ -249,6 +249,7 @@ stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/b
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
 stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
+stack run moladtbayes -- freesolv-wl-system-gp --seed 18
 make haskell-test
 make haskell-viewer
 make haskell-demo
@@ -265,8 +266,14 @@ Viewer commands:
 The Haskell benchmark path is intentionally narrow:
 
 - it consumes the Python `freesolv_moladt_featurized` export
-- it runs a local exact RBF Gaussian process
+- it can run the older local exact RBF Gaussian process over exported feature
+  matrices
 - it works over the typed MolADT feature matrix
+- the default MolADT-only WL + bonding-system GP path reads FreeSolv
+  SDF molecules directly, labels atoms with element, formal charge, shell, and
+  orbital occupancy, and uses only bonding-system-derived edges
+- that WL + bonding-system GP defaults to the local seed-18 single split in
+  `data/freesolv_wl_system_seed18_split.json`
 - the Python repo owns the larger benchmark runner and paper artifacts
 
 ## Scope

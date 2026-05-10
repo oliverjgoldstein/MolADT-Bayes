@@ -32,6 +32,14 @@ import           FreeSolvInverseDesign
   , printSearchResult
   , runFreeSolvInverseDesign
   )
+import           FreeSolvWLBondingGP
+  ( FreeSolvWLBondingConfig(..)
+  , defaultFreeSolvWLBondingConfig
+  , printFreeSolvWLBondingResult
+  , printFreeSolvWLBondingSummary
+  , runFreeSolvWLBondingGP
+  , runFreeSolvWLBondingGPSplits
+  )
 import qualified Data.Char as Char
 import           Data.List (isPrefixOf, isSuffixOf)
 import           Data.Maybe (isJust)
@@ -65,6 +73,8 @@ main = do
       runInferBenchmark processedDataDir datasetPrefix methodName Nothing
     ["infer-benchmark", datasetPrefix, methodName, limitText] ->
       runInferBenchmark processedDataDir datasetPrefix methodName (readMaybe limitText)
+    "freesolv-wl-system-gp" : wlArgs ->
+      runFreeSolvWLBondingCli processedDataDir wlArgs
     "inverse-design" : inverseArgs ->
       runInverseDesignCli processedDataDir inverseArgs
     _ -> putStrLn usage
@@ -87,6 +97,8 @@ usage = unlines
   , "  stack run moladtbayes -- to-smiles molecules/benzene.sdf"
   , "  stack run moladtbayes -- to-json molecules/benzene.sdf > benzene.moladt.json"
   , "  stack run moladtbayes -- from-json benzene.moladt.json"
+  , "  stack run moladtbayes -- freesolv-wl-system-gp --seed 18"
+  , "  stack run moladtbayes -- freesolv-wl-system-gp --split-json data/freesolv_wl_system_seed18_split.json"
   , "  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2"
   , "  stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water"
   , ""
@@ -322,6 +334,43 @@ runInferBenchmark processedDataDir datasetPrefix methodName mLimit =
             ++ "`. Use `lwis`, `lwis:<particles>`, `mh`, or `mh:<jitter>`."
         Just method ->
           runBenchmarkRegressionWith defaultSamplingConfig method processedDataDir datasetPrefix mLimit
+
+runFreeSolvWLBondingCli :: FilePath -> [String] -> IO ()
+runFreeSolvWLBondingCli processedDataDir rawArgs =
+  case parseFreeSolvWLBondingArgs processedDataDir rawArgs of
+    Left err -> putStrLn err
+    Right config -> do
+      if wlAllSplits config
+        then do
+          results <- runFreeSolvWLBondingGPSplits config
+          printFreeSolvWLBondingSummary results
+        else do
+          result <- runFreeSolvWLBondingGP config
+          printFreeSolvWLBondingResult result
+
+parseFreeSolvWLBondingArgs :: FilePath -> [String] -> Either String FreeSolvWLBondingConfig
+parseFreeSolvWLBondingArgs processedDataDir rawArgs =
+  go rawArgs (defaultFreeSolvWLBondingConfig processedDataDir)
+  where
+    go [] config = Right config
+    go ["--help"] _ = Left usage
+    go ("--seed" : value : rest) config =
+      case readMaybe value of
+        Nothing -> Left "Invalid --seed value. Example: --seed 18"
+        Just seedValue -> go rest config { wlSeed = seedValue }
+    go ("--split-json" : path : rest) config =
+      go rest config { wlSplitJson = Just path }
+    go ("--all-splits" : rest) config =
+      go rest config { wlAllSplits = True }
+    go ("--raw-sdf-dir" : path : rest) config =
+      go rest config { wlRawSdfDir = path }
+    go ("--output" : path : rest) config =
+      go rest config { wlOutputCsv = Just path }
+    go (flag : _) _ =
+      Left $
+        "Unknown freesolv-wl-system-gp option `"
+        ++ flag
+        ++ "`. Use --seed, --split-json, --all-splits, --raw-sdf-dir, and/or --output."
 
 runInverseDesignCli :: FilePath -> [String] -> IO ()
 runInverseDesignCli processedDataDir rawArgs =

@@ -19,8 +19,9 @@ stack run moladtbayes -- --help
 | `parse-smiles <text>` | Parse the conservative SMILES subset into MolADT. |
 | `to-smiles <sdf>` | Render validated classical MolADT structures to supported SMILES. |
 | `pretty-example <name>` | Print built-in `benzene`, `morphine`, `diborane`, `ferrocene`, or `sodium_chloride`; add `--viewer-output` to export HTML. |
-| `infer-benchmark <prefix> <method> [limit]` | Run the Haskell FreeSolv benchmark consumer. |
-| `inverse-design --target <value> --seed-molecule <name>` | Run the small typed FreeSolv inverse-design search. |
+| `freesolv-wl-system-gp [options]` | Run the default MolADT-only WL + bonding-system FreeSolv GP from parsed SDF molecules. |
+| `infer-benchmark <prefix> <method> [limit]` | Run the legacy exported-feature FreeSolv benchmark consumer. |
+| `inverse-design --target <value> --seed-molecule <name>` | Run the legacy exported-feature FreeSolv inverse-design search. |
 
 ## Useful Runs
 
@@ -38,6 +39,8 @@ stack run moladtbayes -- pretty-example benzene --viewer-output results/viewer/b
 stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/diborane.viewer.html
 stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
+stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+stack run moladtbayes -- freesolv-wl-system-gp --split-json data/freesolv_wl_system_seed18_split.json
 stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water
 ```
 

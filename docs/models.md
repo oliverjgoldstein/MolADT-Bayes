@@ -8,8 +8,9 @@ benchmark feature matrices exported by Python.
 The Haskell model path is narrow:
 
 - dataset: `freesolv_moladt_featurized`
-- model: finite exact RBF Gaussian process
-- inference kernels: `mh` and `lwis`
+- default model: MolADT WL + bonding-system exact empirical-Bayes Gaussian process
+- legacy exported-feature path: finite exact RBF Gaussian process
+- legacy inference kernels: `mh` and `lwis`
 
 Run:
 
@@ -17,10 +18,23 @@ Run:
 make haskell-infer-benchmark
 ```
 
-or:
+The older exported-feature path is still available directly:
 
 ```bash
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
+```
+
+For the MolADT-only WL + bonding-system GP:
+
+```bash
+stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+```
+
+The default split is the repo-local seed-18 single split:
+
+```bash
+stack run moladtbayes -- freesolv-wl-system-gp \
+  --split-json data/freesolv_wl_system_seed18_split.json
 ```
 
 ## What The Features Are
@@ -78,6 +92,26 @@ gaussianProcessBenchmarkModel support = do
 
 The command prints molecule counts, feature counts, selected GP features, the
 draw budget, a runtime expectation, and final metrics.
+
+## MolADT WL + Bonding-System GP
+
+The `freesolv-wl-system-gp` command is the Haskell equivalent of the default
+Python MolADT-only FreeSolv GP:
+
+- it reads `freesolv_moladt_featurized_features.csv` only for `mol_id` and
+  `expt`
+- it loads each matching FreeSolv SDF through the Haskell SDF parser
+- it does not use RDKit or SMILES features
+- atom labels include element symbol, formal-charge bucket, shell count,
+  orbital count, shell electron count, and shell occupancy signature
+- edge labels and system tokens are derived from MolADT bonding systems,
+  effective order, shared electrons, overlap count, and system kind
+- the exact GP combines Tanimoto kernels over WL + bonding-system tokens,
+  bonding-system tokens, and WL graph tokens
+- the default split is the same seed-18 single split used by the Python repo
+
+On the local seed-18 split, the Haskell path reported
+`0.650917` kcal/mol RMSE and `0.408483` kcal/mol MAE on 65 held-out molecules.
 
 ## Why This Matters
 

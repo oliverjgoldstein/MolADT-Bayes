@@ -68,6 +68,7 @@ library:
     - PrettyBenzene
     - BenchmarkModel
     - FreeSolvInverseDesign
+    - FreeSolvWLBondingGP
   other-modules:
     - ExtraF
     - Chem.Molecule.Coordinate

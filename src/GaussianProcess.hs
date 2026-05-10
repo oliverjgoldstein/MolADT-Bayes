@@ -8,6 +8,9 @@ module GaussianProcess
   , gaussianProcessLogLikelihood
   , predictGaussianProcess
   , prepareGaussianProcessSupport
+  , choleskyDecompose
+  , forwardSubstitute
+  , solveSymmetricPositiveDefinite
   ) where
 
 import Control.DeepSeq (NFData)

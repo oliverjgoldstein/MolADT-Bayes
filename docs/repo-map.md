@@ -35,9 +35,10 @@ Use this page when you need to find the right file quickly.
 ## Bayesian Work
 
 - [`src/BenchmarkModel.hs`](../src/BenchmarkModel.hs): Haskell FreeSolv benchmark consumer.
-- [`src/GaussianProcess.hs`](../src/GaussianProcess.hs): finite exact RBF GP.
+- [`src/GaussianProcess.hs`](../src/GaussianProcess.hs): exact GP linear algebra helpers.
+- [`src/FreeSolvWLBondingGP.hs`](../src/FreeSolvWLBondingGP.hs): MolADT-only WL + bonding-system FreeSolv GP.
 - [`src/LazyPPL.hs`](../src/LazyPPL.hs): `mh` and `lwis` kernels.
-- [`src/FreeSolvInverseDesign.hs`](../src/FreeSolvInverseDesign.hs): typed inverse-design search.
+- [`src/FreeSolvInverseDesign.hs`](../src/FreeSolvInverseDesign.hs): legacy exported-feature typed inverse-design search.
 
 ## Tests
 

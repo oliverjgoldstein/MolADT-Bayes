@@ -53,7 +53,9 @@ starts.
 make haskell-infer-benchmark
 ```
 
-This reads processed exports from the sibling Python repo:
+This runs the MolADT WL + bonding-system GP on the same seed-18 FreeSolv split
+used by the Python repo. It reads processed `mol_id`/target exports from the
+sibling Python repo and parses the matching SDF molecules locally:
 
 ```bash
 ../MolADT-Bayes-Python/data/processed
@@ -63,7 +65,7 @@ Override that path with:
 
 ```bash
 MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
-  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
+  stack run moladtbayes -- freesolv-wl-system-gp --seed 18
 ```
 
 ## Common Fixes

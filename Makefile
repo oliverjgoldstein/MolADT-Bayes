@@ -1,5 +1,6 @@
 DATASET_PREFIX ?= freesolv_moladt_featurized
 METHOD ?= mh:0.2
+WL_SEED ?= 18
 ROW_LIMIT ?=
 ROW_LIMIT_SCOPE := $(if $(strip $(ROW_LIMIT)),limit_$(ROW_LIMIT),full)
 ROW_LIMIT_DISPLAY := $(if $(strip $(ROW_LIMIT)),$(ROW_LIMIT),full)
@@ -36,8 +37,8 @@ help:
 	"  make haskell-build          Build the Haskell project" \
 	"  make haskell-test           Run the Haskell test suites" \
 	"  make haskell-demo           Run the demo executable" \
-	"  make haskell-infer-benchmark Run the aligned benchmark consumer" \
-	"  make haskell-inverse-design Run FreeSolv inverse design from a typed seed molecule" \
+	"  make haskell-infer-benchmark Run the MolADT WL + bonding-system GP benchmark" \
+	"  make haskell-inverse-design Run legacy exported-feature FreeSolv inverse design" \
 	"  make haskell-parse          Parse molecules/benzene.sdf" \
 	"  make haskell-parse-smiles   Parse c1ccccc1" \
 	"  make haskell-to-smiles      Render molecules/benzene.sdf to SMILES" \
@@ -51,6 +52,7 @@ help:
 	"  large (>100 MB) Python-side downloads and extractions show counts, speed, and elapsed time" \
 	"  dataset_prefix=$(DATASET_PREFIX)" \
 	"  method=$(METHOD)" \
+	"  wl_seed=$(WL_SEED)" \
 	"  inverse_design_target=$(TARGET)" \
 	"  inverse_design_seed=$(SEED_MOLECULE)" \
 	"  viewer_input=$(VIEWER_INPUT)" \
@@ -278,16 +280,15 @@ haskell-demo: haskell-check-stack
 
 haskell-infer-benchmark: haskell-check-stack
 	@printf "%s\n" \
-	"Running Haskell aligned benchmark inference." \
+	"Running Haskell MolADT WL + bonding-system GP benchmark." \
 	"  repo: MolADT-Bayes-Haskell" \
-	"  dataset_prefix: $(DATASET_PREFIX)" \
-	"  method: $(METHOD)" \
-	"  row_limit: $(ROW_LIMIT_DISPLAY)" \
+	"  model: MolADT WL + bonding-system empirical-Bayes GP" \
+	"  seed: $(WL_SEED)" \
 	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
 	"  delegated Python repo for missing exports: $(PYTHON_REPO_DIR)" \
 	"  stack_cmd: $(STACK_CMD)"
 	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="$(DATASET_PREFIX)" haskell-check-dataset-data
-	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- infer-benchmark $(DATASET_PREFIX) $(METHOD) $(ROW_LIMIT)
+	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --seed $(WL_SEED)
 
 haskell-inverse-design: haskell-check-stack
 	@printf "%s\n" \
@@ -296,7 +297,7 @@ haskell-inverse-design: haskell-check-stack
 	"  target: $(TARGET)" \
 	"  seed_molecule: $(SEED_MOLECULE)" \
 	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
-	"  FreeSolv model artifact: latest complete run under $(PYTHON_REPO_DIR)/results/freesolv" \
+	"  FreeSolv model artifact: legacy exported-feature GP run under $(PYTHON_REPO_DIR)/results/freesolv" \
 	"  stack_cmd: $(STACK_CMD)"
 	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="freesolv_moladt_featurized" haskell-check-dataset-data
 	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- inverse-design --target $(TARGET) --seed-molecule $(SEED_MOLECULE)
