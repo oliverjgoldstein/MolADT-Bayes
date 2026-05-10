@@ -9,20 +9,13 @@ The Haskell model path is narrow:
 
 - dataset: `freesolv_moladt_featurized`
 - default model: MolADT WL + bonding-system exact empirical-Bayes Gaussian process
-- legacy exported-feature path: finite exact RBF Gaussian process
-- legacy inference kernels: `mh` and `lwis`
+- paper ablation: A-F graph/multigraph/Dietz ladder in the Python repo
 
 Run:
 
 ```bash
 make haskell-infer-benchmark
 make haskell-freesolv-20split
-```
-
-The older exported-feature path is still available directly:
-
-```bash
-stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
 For the MolADT-only WL + bonding-system GP:
@@ -61,48 +54,6 @@ Haskell reads:
 - `<prefix>_y_valid.csv`
 - `<prefix>_y_test.csv`
 
-## What The GP Does
-
-For FreeSolv, the Haskell GP:
-
-- reads the Python-exported MolADT feature matrix
-- screens the train split to the strongest `24` feature channels
-- builds an exact RBF covariance over the finite training rows
-- samples GP hyperparameters with LazyPPL
-- predicts validation and test rows with posterior averaging
-
-The model-selection branch is deliberately small:
-
-```haskell
-modelFamilyFor :: BenchmarkDataset -> BenchmarkModelFamily
-modelFamilyFor dataset
-  | "freesolv_" `isPrefixOf` datasetPrefix dataset
-    && representationName dataset == "moladt_featurized" = UseGaussianProcessRbf
-  | otherwise = UseLinearStudentT
-```
-
-The GP hyperparameters are sampled as ordinary probabilistic code:
-
-```haskell
-gaussianProcessBenchmarkModel :: GaussianProcessSupport -> Meas BenchmarkParameters
-gaussianProcessBenchmarkModel support = do
-  meanOffset <- sample (normal 0.0 5.0)
-  logKernelScale <- sample (normal 0.0 1.0)
-  logLengthScale <- sample (normal 0.0 1.0)
-  logNoiseScale <- sample (normal (-1.0) 1.0)
-  let params = GaussianProcessParameters
-        { gpMeanOffset = meanOffset
-        , gpKernelScale = exp logKernelScale
-        , gpLengthScale = exp logLengthScale
-        , gpNoiseScale = exp logNoiseScale
-        }
-  scoreLog (Exp (fromMaybe (-1.0e12) (gaussianProcessLogLikelihood support params)))
-  pure (GaussianProcessPosterior params)
-```
-
-The command prints molecule counts, feature counts, selected GP features, the
-draw budget, a runtime expectation, and final metrics.
-
 ## MolADT WL + Bonding-System GP
 
 The `freesolv-wl-system-gp` command is the Haskell equivalent of the default
@@ -136,15 +87,22 @@ chemistry rather than Euclidean distance in a dense descriptor table.
 On the local seed-18 split, the Haskell path reported
 `0.650917` kcal/mol RMSE and `0.408483` kcal/mol MAE on 65 held-out molecules.
 
-Difference from the previous GP:
+## Representation Ablation
 
-- previous path: screened `moladt_featurized` scalar descriptor columns,
-  standardized Euclidean distances, and an RBF kernel
-- current default: sparse MolADT token counts from atoms, formal charges,
-  orbitals, edges, and explicit bonding systems, compared with Tanimoto kernels
-- no molecular fingerprints are used in the current default
-- for a representation-led result, the current default is the primary model;
-  the previous RBF GP is best treated as a baseline or ablation
+The paper comparison is the Python A-F ablation rather than the legacy RBF
+descriptor GP:
+
+| Label | Variant | Meaning | Test RMSE |
+| --- | --- | --- | ---: |
+| A | atom bag | atoms only, no connectivity | `1.857 +/- 0.361` |
+| B | simple graph WL | atoms plus binary adjacency | `1.060 +/- 0.131` |
+| C | bond-order graph WL | one edge per atom pair with bond-order labels | `1.049 +/- 0.142` |
+| D | multigraph multiplicity WL | parallel-edge-style multiplicity from effective order | `1.020 +/- 0.123` |
+| E | Dietz edge WL | Dietz-derived edge labels without separate system tokens | `1.049 +/- 0.142` |
+| F | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
+
+That ladder is the direct test of the representation claim: non-multigraph graph
+structure versus multigraph-like order versus explicit Dietz bonding systems.
 
 ## Why This Matters
 

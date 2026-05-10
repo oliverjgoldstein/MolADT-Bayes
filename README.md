@@ -83,19 +83,23 @@ The weights and noise variance are the empirical-Bayes values fitted by the
 Python seed-18 artifact. Haskell then performs exact GP conditioning over the
 same split and reports predictive means and standard deviations in kcal/mol.
 
-### Difference From The Previous GP
+### Representation Ablation
 
-The previous FreeSolv GP used the exported `moladt_featurized` scalar descriptor
-matrix, screened the strongest descriptor columns on the training split, and
-applied an RBF kernel over standardized Euclidean distance. That remains useful
-as a baseline or ablation.
+The main empirical comparison lives in the Python repo because it owns the
+FreeSolv paper artifacts. The A-F ladder asks whether Dietz/multigraph bonding
+systems add predictive signal beyond non-multigraph graph structure:
 
-The default GP now rebuilds molecules from the MolADT SDF parser and uses sparse
-MolADT token counts from atoms, formal charges, orbitals, edges, and explicit
-bonding systems. It compares those token-count views with Tanimoto kernels and
-does not use molecular fingerprints. For a Springer Nature-style representation
-paper, this is the stronger primary model because the kernel is tied directly to
-typed MolADT chemistry.
+| Label | Variant | Meaning | Test RMSE |
+| --- | --- | --- | ---: |
+| A | atom bag | atoms only, no connectivity | `1.857 +/- 0.361` |
+| B | simple graph WL | atoms plus binary adjacency | `1.060 +/- 0.131` |
+| C | bond-order graph WL | one edge per atom pair with bond-order labels | `1.049 +/- 0.142` |
+| D | multigraph multiplicity WL | parallel-edge-style multiplicity from effective order | `1.020 +/- 0.123` |
+| E | Dietz edge WL | Dietz-derived edge labels without separate system tokens | `1.049 +/- 0.142` |
+| F | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
+
+This is the comparison to foreground in the paper. The legacy descriptor RBF GP
+is no longer the main baseline because it tests a different question.
 
 ## Why MolADT
 
@@ -339,9 +343,6 @@ Viewer commands:
 The Haskell benchmark path is intentionally narrow:
 
 - it consumes the Python `freesolv_moladt_featurized` export
-- it can run the older local exact RBF Gaussian process over exported feature
-  matrices
-- it works over the typed MolADT feature matrix
 - the default MolADT-only WL + bonding-system GP path reads FreeSolv
   SDF molecules directly, labels atoms with element, formal charge, shell, and
   orbital occupancy, and uses only bonding-system-derived edges
@@ -349,7 +350,7 @@ The Haskell benchmark path is intentionally narrow:
   `data/freesolv_wl_system_seed18_split.json`
 - `make haskell-freesolv-20split` uses `data/freesolv_wl_system_20_splits.json`
   and writes repeated-split metrics under `results/freesolv_20split/`
-- the Python repo owns the larger benchmark runner and paper artifacts
+- the Python repo owns the A-F representation ablation and the paper artifacts
 
 ## Scope
 
