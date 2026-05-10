@@ -10,6 +10,7 @@ and runs the MolADT WL + bonding-system GP locally.
 
 ```bash
 make haskell-infer-benchmark
+make haskell-freesolv-20split
 ```
 
 Direct form:
@@ -23,6 +24,15 @@ The default command uses the repo-local seed-18 split:
 ```bash
 stack run moladtbayes -- freesolv-wl-system-gp \
   --split-json data/freesolv_wl_system_seed18_split.json
+```
+
+The repeated-split target uses the committed 20-split JSON:
+
+```bash
+make haskell-freesolv-20split
+stack run moladtbayes -- freesolv-wl-system-gp --all-splits \
+  --split-json data/freesolv_wl_system_20_splits.json \
+  --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv
 ```
 
 ## Methods

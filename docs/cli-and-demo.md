@@ -41,6 +41,7 @@ stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 stack run moladtbayes -- freesolv-wl-system-gp --seed 18
 stack run moladtbayes -- freesolv-wl-system-gp --split-json data/freesolv_wl_system_seed18_split.json
+stack run moladtbayes -- freesolv-wl-system-gp --all-splits --split-json data/freesolv_wl_system_20_splits.json --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv
 stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water
 ```
 

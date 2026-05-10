@@ -1,0 +1,2 @@
+seed,split_source,train_valid_count,test_count,rmse,mae,r2,mean_predictive_sd,coverage_90
+18,split-json:data/freesolv_wl_system_seed18_split.json,577,65,0.6509168222983545,0.4084828941194068,0.9602464192496786,0.9947052325392455,0.9538461538461539

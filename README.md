@@ -25,6 +25,78 @@ Molecule = atoms + bonding systems + stereochemistry
 [Parsing](docs/parsing.md) | [Viewer](docs/parsing.md#viewer) | [Validator](#validator) |
 [Inference](docs/inference.md)
 
+## FreeSolv GP Model
+
+The default FreeSolv benchmark is `freesolv-wl-system-gp`, the Haskell mirror of
+the Python `moladt_wl_system_gp`:
+
+- input molecules are parsed from FreeSolv SDF files into the Haskell `Molecule`
+  ADT; the model does not use SMILES or RDKit fingerprints
+- atom labels include element, formal charge, shell count, orbital count,
+  shell electron count, and orbital occupancy signatures
+- edge labels include element pair, effective order, shared electrons,
+  bonding-system overlap count, and bonding-system kind
+- system labels include covalent, ionic, bridge, pi, coordination, and other
+  Dietz bonding systems
+- the exact GP uses fitted Tanimoto-kernel weights for the combined WL +
+  bonding-system token view, the bonding-system-only view, and the WL graph view
+- predictions are posterior means and standard deviations for hydration free
+  energy in kcal/mol
+
+`make haskell-infer-benchmark` writes the latest single-split run under
+`results/freesolv/run_<timestamp>/` and removes older FreeSolv `run_*`
+directories first. `make haskell-freesolv-20split` writes the repeated-split CSV
+under `results/freesolv_20split/run_<timestamp>/` with the same cleanup policy.
+
+### Feature Map
+
+The feature map is built from the ADT, not from notation strings:
+
+- **Atom labels** encode element, formal charge, shell count, orbital count,
+  shell electron count, and orbital occupancy.
+- **Edge labels** encode element pair, effective order, shared electrons,
+  overlap count, and the bonding-system kinds using the edge.
+- **Bonding-system labels** encode shared electrons, member atoms, member
+  edges, atom symbols, edge element pairs, and whether the system is covalent,
+  ionic, bridge, pi, coordination, or another explicit Dietz system.
+- **WL tokens** propagate atom and edge labels through local neighborhoods.
+- **System tokens** keep information that a plain graph loses, especially
+  ionic contacts, delocalisation, bridges, coordination, and overlapping
+  systems.
+
+### Kernel Choice
+
+The exact GP uses Tanimoto kernels because the features are sparse token-count
+vectors. Tanimoto similarity rewards shared active tokens while normalising by
+the active-token union, which is the natural comparison for this representation.
+
+The kernel is:
+
+```text
+k(x, x') =
+  w_all    * Tanimoto(WL + bonding-system tokens)
+  + w_sys  * Tanimoto(bonding-system tokens)
+  + w_wl   * Tanimoto(WL graph tokens)
+```
+
+The weights and noise variance are the empirical-Bayes values fitted by the
+Python seed-18 artifact. Haskell then performs exact GP conditioning over the
+same split and reports predictive means and standard deviations in kcal/mol.
+
+### Difference From The Previous GP
+
+The previous FreeSolv GP used the exported `moladt_featurized` scalar descriptor
+matrix, screened the strongest descriptor columns on the training split, and
+applied an RBF kernel over standardized Euclidean distance. That remains useful
+as a baseline or ablation.
+
+The default GP now rebuilds molecules from the MolADT SDF parser and uses sparse
+MolADT token counts from atoms, formal charges, orbitals, edges, and explicit
+bonding systems. It compares those token-count views with Tanimoto kernels and
+does not use molecular fingerprints. For a Springer Nature-style representation
+paper, this is the stronger primary model because the kernel is tied directly to
+typed MolADT chemistry.
+
 ## Why MolADT
 
 String formats and plain graphs are useful, but limited:
@@ -250,6 +322,7 @@ stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/
 stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
 stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+make haskell-freesolv-20split
 make haskell-test
 make haskell-viewer
 make haskell-demo
@@ -274,6 +347,8 @@ The Haskell benchmark path is intentionally narrow:
   orbital occupancy, and uses only bonding-system-derived edges
 - that WL + bonding-system GP defaults to the local seed-18 single split in
   `data/freesolv_wl_system_seed18_split.json`
+- `make haskell-freesolv-20split` uses `data/freesolv_wl_system_20_splits.json`
+  and writes repeated-split metrics under `results/freesolv_20split/`
 - the Python repo owns the larger benchmark runner and paper artifacts
 
 ## Scope

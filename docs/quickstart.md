@@ -51,6 +51,7 @@ starts.
 
 ```bash
 make haskell-infer-benchmark
+make haskell-freesolv-20split
 ```
 
 This runs the MolADT WL + bonding-system GP on the same seed-18 FreeSolv split
@@ -67,6 +68,10 @@ Override that path with:
 MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
   stack run moladtbayes -- freesolv-wl-system-gp --seed 18
 ```
+
+`make haskell-freesolv-20split` uses the committed
+`data/freesolv_wl_system_20_splits.json` file and writes repeated-split metrics
+to `results/freesolv_20split/run_<timestamp>/freesolv_wl_system_20split.csv`.
 
 ## Common Fixes
 

@@ -1,6 +1,12 @@
 DATASET_PREFIX ?= freesolv_moladt_featurized
 METHOD ?= mh:0.2
 WL_SEED ?= 18
+RUN_TIMESTAMP ?= $(shell date +%Y%m%d_%H%M%S)
+WL_RESULTS_SUBDIR ?= freesolv/run_$(RUN_TIMESTAMP)
+WL_OUTPUT ?= results/$(WL_RESULTS_SUBDIR)/freesolv_wl_system_gp.csv
+WL_20_SPLIT_JSON ?= data/freesolv_wl_system_20_splits.json
+WL_20_SPLIT_RESULTS_SUBDIR ?= freesolv_20split/run_$(RUN_TIMESTAMP)
+WL_20_SPLIT_OUTPUT ?= results/$(WL_20_SPLIT_RESULTS_SUBDIR)/freesolv_wl_system_20split.csv
 ROW_LIMIT ?=
 ROW_LIMIT_SCOPE := $(if $(strip $(ROW_LIMIT)),limit_$(ROW_LIMIT),full)
 ROW_LIMIT_DISPLAY := $(if $(strip $(ROW_LIMIT)),$(ROW_LIMIT),full)
@@ -29,7 +35,7 @@ AUTO_APPROVE_FIXES ?= 0
 TESTED_GHC := 9.6.5
 TESTED_STACK_RESOLVER := lts-22.25
 
-.PHONY: help haskell-check-stack haskell-check-dataset-data haskell-check-sdf-timing-data haskell-build haskell-test haskell-demo haskell-infer-benchmark haskell-inverse-design haskell-parse haskell-parse-smiles haskell-parse-sdf-timing haskell-to-smiles haskell-view haskell-viewer view molecule-viewer
+.PHONY: help haskell-check-stack haskell-check-dataset-data haskell-check-sdf-timing-data haskell-build haskell-test haskell-demo haskell-infer-benchmark haskell-freesolv-20split haskell-inverse-design haskell-parse haskell-parse-smiles haskell-parse-sdf-timing haskell-to-smiles haskell-view haskell-viewer view molecule-viewer
 
 help:
 	@printf "%s\n" \
@@ -38,6 +44,7 @@ help:
 	"  make haskell-test           Run the Haskell test suites" \
 	"  make haskell-demo           Run the demo executable" \
 	"  make haskell-infer-benchmark Run the MolADT WL + bonding-system GP benchmark" \
+	"  make haskell-freesolv-20split Run the MolADT WL + bonding-system GP over 20 splits" \
 	"  make haskell-inverse-design Run legacy exported-feature FreeSolv inverse design" \
 	"  make haskell-parse          Parse molecules/benzene.sdf" \
 	"  make haskell-parse-smiles   Parse c1ccccc1" \
@@ -53,6 +60,9 @@ help:
 	"  dataset_prefix=$(DATASET_PREFIX)" \
 	"  method=$(METHOD)" \
 	"  wl_seed=$(WL_SEED)" \
+	"  wl_output=$(WL_OUTPUT)" \
+	"  wl_20_split_json=$(WL_20_SPLIT_JSON)" \
+	"  wl_20_split_output=$(WL_20_SPLIT_OUTPUT)" \
 	"  inverse_design_target=$(TARGET)" \
 	"  inverse_design_seed=$(SEED_MOLECULE)" \
 	"  viewer_input=$(VIEWER_INPUT)" \
@@ -284,11 +294,29 @@ haskell-infer-benchmark: haskell-check-stack
 	"  repo: MolADT-Bayes-Haskell" \
 	"  model: MolADT WL + bonding-system empirical-Bayes GP" \
 	"  seed: $(WL_SEED)" \
+	"  output: $(WL_OUTPUT)" \
 	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
 	"  delegated Python repo for missing exports: $(PYTHON_REPO_DIR)" \
 	"  stack_cmd: $(STACK_CMD)"
 	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="$(DATASET_PREFIX)" haskell-check-dataset-data
-	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --seed $(WL_SEED)
+	@find results/freesolv -mindepth 1 -maxdepth 1 -type d -name 'run_*' -exec rm -rf {} + 2>/dev/null || true
+	@mkdir -p "$(dir $(WL_OUTPUT))"
+	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --seed $(WL_SEED) --output "$(WL_OUTPUT)"
+
+haskell-freesolv-20split: haskell-check-stack
+	@printf "%s\n" \
+	"Running Haskell FreeSolv 20-split MolADT WL + bonding-system GP." \
+	"  repo: MolADT-Bayes-Haskell" \
+	"  model: MolADT WL + bonding-system empirical-Bayes GP" \
+	"  split_json: $(WL_20_SPLIT_JSON)" \
+	"  output: $(WL_20_SPLIT_OUTPUT)" \
+	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
+	"  delegated Python repo for missing exports: $(PYTHON_REPO_DIR)" \
+	"  stack_cmd: $(STACK_CMD)"
+	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="$(DATASET_PREFIX)" haskell-check-dataset-data
+	@find results/freesolv_20split -mindepth 1 -maxdepth 1 -type d -name 'run_*' -exec rm -rf {} + 2>/dev/null || true
+	@mkdir -p "$(dir $(WL_20_SPLIT_OUTPUT))"
+	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --all-splits --split-json "$(WL_20_SPLIT_JSON)" --output "$(WL_20_SPLIT_OUTPUT)"
 
 haskell-inverse-design: haskell-check-stack
 	@printf "%s\n" \

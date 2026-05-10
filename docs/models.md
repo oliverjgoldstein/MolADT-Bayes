@@ -16,6 +16,7 @@ Run:
 
 ```bash
 make haskell-infer-benchmark
+make haskell-freesolv-20split
 ```
 
 The older exported-feature path is still available directly:
@@ -36,6 +37,15 @@ The default split is the repo-local seed-18 single split:
 stack run moladtbayes -- freesolv-wl-system-gp \
   --split-json data/freesolv_wl_system_seed18_split.json
 ```
+
+For repeated-split uncertainty:
+
+```bash
+make haskell-freesolv-20split
+```
+
+That target reads `data/freesolv_wl_system_20_splits.json` and writes a CSV to
+`results/freesolv_20split/`.
 
 ## What The Features Are
 
@@ -110,8 +120,31 @@ Python MolADT-only FreeSolv GP:
   bonding-system tokens, and WL graph tokens
 - the default split is the same seed-18 single split used by the Python repo
 
+The kernel is:
+
+```text
+k(x, x') =
+  w_all    * Tanimoto(WL + bonding-system tokens)
+  + w_sys  * Tanimoto(bonding-system tokens)
+  + w_wl   * Tanimoto(WL graph tokens)
+```
+
+Tanimoto is used because the features are sparse non-negative token counts, so
+similarity should mean shared active chemistry relative to the union of active
+chemistry rather than Euclidean distance in a dense descriptor table.
+
 On the local seed-18 split, the Haskell path reported
 `0.650917` kcal/mol RMSE and `0.408483` kcal/mol MAE on 65 held-out molecules.
+
+Difference from the previous GP:
+
+- previous path: screened `moladt_featurized` scalar descriptor columns,
+  standardized Euclidean distances, and an RBF kernel
+- current default: sparse MolADT token counts from atoms, formal charges,
+  orbitals, edges, and explicit bonding systems, compared with Tanimoto kernels
+- no molecular fingerprints are used in the current default
+- for a representation-led result, the current default is the primary model;
+  the previous RBF GP is best treated as a baseline or ablation
 
 ## Why This Matters
 
