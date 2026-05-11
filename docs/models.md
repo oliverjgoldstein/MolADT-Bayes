@@ -9,7 +9,7 @@ The Haskell model path is narrow:
 
 - dataset: `freesolv_moladt_featurized`
 - default model: MolADT WL + bonding-system exact empirical-Bayes Gaussian process
-- paper ablation: A-F graph/multigraph/Dietz ladder in the Python repo
+- paper ablation: A/B/C atom-bag/standard-covalent-graph/full-MolADT ladder in the Python repo
 
 Run:
 
@@ -89,20 +89,17 @@ On the local seed-18 split, the Haskell path reported
 
 ## Representation Ablation
 
-The paper comparison is the Python A-F ablation rather than the legacy RBF
+The paper comparison is the Python A/B/C ablation rather than the legacy RBF
 descriptor GP:
 
 | Label | Variant | Meaning | Test RMSE |
 | --- | --- | --- | ---: |
 | A | atom bag | atoms only, no connectivity | `1.857 +/- 0.361` |
-| B | simple graph WL | atoms plus binary adjacency | `1.060 +/- 0.131` |
-| C | bond-order graph WL | one edge per atom pair with bond-order labels | `1.049 +/- 0.142` |
-| D | multigraph multiplicity WL | parallel-edge-style multiplicity from effective order | `1.020 +/- 0.123` |
-| E | Dietz edge WL | Dietz-derived edge labels without separate system tokens | `1.049 +/- 0.142` |
-| F | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
+| B | standard covalent graph WL | atom labels plus a standard covalent bond-order adjacency graph | `1.049 +/- 0.142` |
+| C | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
 
-That ladder is the direct test of the representation claim: non-multigraph graph
-structure versus multigraph-like order versus explicit Dietz bonding systems.
+That ladder is the direct test of the representation claim: no connectivity
+versus ordinary covalent graph structure versus explicit Dietz bonding systems.
 
 ## Why This Matters
 

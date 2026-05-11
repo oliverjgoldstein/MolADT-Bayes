@@ -86,17 +86,14 @@ same split and reports predictive means and standard deviations in kcal/mol.
 ### Representation Ablation
 
 The main empirical comparison lives in the Python repo because it owns the
-FreeSolv paper artifacts. The A-F ladder asks whether Dietz/multigraph bonding
-systems add predictive signal beyond non-multigraph graph structure:
+FreeSolv paper artifacts. The A/B/C ladder asks whether explicit Dietz bonding
+systems add predictive signal beyond an atom bag and a standard covalent graph:
 
 | Label | Variant | Meaning | Test RMSE |
 | --- | --- | --- | ---: |
 | A | atom bag | atoms only, no connectivity | `1.857 +/- 0.361` |
-| B | simple graph WL | atoms plus binary adjacency | `1.060 +/- 0.131` |
-| C | bond-order graph WL | one edge per atom pair with bond-order labels | `1.049 +/- 0.142` |
-| D | multigraph multiplicity WL | parallel-edge-style multiplicity from effective order | `1.020 +/- 0.123` |
-| E | Dietz edge WL | Dietz-derived edge labels without separate system tokens | `1.049 +/- 0.142` |
-| F | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
+| B | standard covalent graph WL | atom labels plus a standard covalent bond-order adjacency graph | `1.049 +/- 0.142` |
+| C | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
 
 This is the comparison to foreground in the paper. The legacy descriptor RBF GP
 is no longer the main baseline because it tests a different question.
@@ -350,7 +347,7 @@ The Haskell benchmark path is intentionally narrow:
   `data/freesolv_wl_system_seed18_split.json`
 - `make haskell-freesolv-20split` uses `data/freesolv_wl_system_20_splits.json`
   and writes repeated-split metrics under `results/freesolv_20split/`
-- the Python repo owns the A-F representation ablation and the paper artifacts
+- the Python repo owns the A/B/C representation ablation and the paper artifacts
 
 ## Scope
 
