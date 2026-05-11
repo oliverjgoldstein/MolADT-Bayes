@@ -37,6 +37,7 @@ Use this page when you need to find the right file quickly.
 - [`src/BenchmarkModel.hs`](../src/BenchmarkModel.hs): Haskell FreeSolv benchmark consumer.
 - [`src/GaussianProcess.hs`](../src/GaussianProcess.hs): exact GP linear algebra helpers.
 - [`src/FreeSolvWLBondingGP.hs`](../src/FreeSolvWLBondingGP.hs): MolADT-only WL + bonding-system FreeSolv GP.
+- [`docs/freesolv-gp-feature-list.md`](freesolv-gp-feature-list.md): exact Haskell WL and bonding-system token names for the default FreeSolv GP.
 - [`src/LazyPPL.hs`](../src/LazyPPL.hs): `mh` and `lwis` kernels.
 - [`src/FreeSolvInverseDesign.hs`](../src/FreeSolvInverseDesign.hs): legacy exported-feature typed inverse-design search.
 

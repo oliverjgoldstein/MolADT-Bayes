@@ -39,6 +39,7 @@ import           FreeSolvWLBondingGP
   , printFreeSolvWLBondingSummary
   , runFreeSolvWLBondingGP
   , runFreeSolvWLBondingGPSplits
+  , writeFreeSolvWLBondingFeatureDoc
   )
 import qualified Data.Char as Char
 import           Data.List (isPrefixOf, isSuffixOf)
@@ -75,6 +76,8 @@ main = do
       runInferBenchmark processedDataDir datasetPrefix methodName (readMaybe limitText)
     "freesolv-wl-system-gp" : wlArgs ->
       runFreeSolvWLBondingCli processedDataDir wlArgs
+    "freesolv-wl-system-features" : featureArgs ->
+      runFreeSolvWLBondingFeatureCli processedDataDir featureArgs
     "inverse-design" : inverseArgs ->
       runInverseDesignCli processedDataDir inverseArgs
     _ -> putStrLn usage
@@ -100,6 +103,7 @@ usage = unlines
   , "  stack run moladtbayes -- freesolv-wl-system-gp --seed 18"
   , "  stack run moladtbayes -- freesolv-wl-system-gp --split-json data/freesolv_wl_system_seed18_split.json"
   , "  stack run moladtbayes -- freesolv-wl-system-gp --all-splits --split-json data/freesolv_wl_system_20_splits.json --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv"
+  , "  stack run moladtbayes -- freesolv-wl-system-features --output docs/freesolv-gp-feature-list.md"
   , "  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2"
   , "  stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water"
   , ""
@@ -372,6 +376,30 @@ parseFreeSolvWLBondingArgs processedDataDir rawArgs =
         "Unknown freesolv-wl-system-gp option `"
         ++ flag
         ++ "`. Use --seed, --split-json, --all-splits, --raw-sdf-dir, and/or --output."
+
+runFreeSolvWLBondingFeatureCli :: FilePath -> [String] -> IO ()
+runFreeSolvWLBondingFeatureCli processedDataDir rawArgs =
+  case parseFreeSolvWLBondingFeatureArgs processedDataDir rawArgs of
+    Left err -> putStrLn err
+    Right (config, outputPath) -> do
+      writeFreeSolvWLBondingFeatureDoc config outputPath
+      putStrLn ("Wrote Haskell FreeSolv GP feature list: " ++ outputPath)
+
+parseFreeSolvWLBondingFeatureArgs :: FilePath -> [String] -> Either String (FreeSolvWLBondingConfig, FilePath)
+parseFreeSolvWLBondingFeatureArgs processedDataDir rawArgs =
+  go rawArgs (defaultFreeSolvWLBondingConfig processedDataDir) "docs/freesolv-gp-feature-list.md"
+  where
+    go [] config outputPath = Right (config, outputPath)
+    go ["--help"] _ _ = Left usage
+    go ("--raw-sdf-dir" : path : rest) config outputPath =
+      go rest config { wlRawSdfDir = path } outputPath
+    go ("--output" : path : rest) config _ =
+      go rest config path
+    go (flag : _) _ _ =
+      Left $
+        "Unknown freesolv-wl-system-features option `"
+        ++ flag
+        ++ "`. Use --raw-sdf-dir and/or --output."
 
 runInverseDesignCli :: FilePath -> [String] -> IO ()
 runInverseDesignCli processedDataDir rawArgs =

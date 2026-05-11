@@ -11,6 +11,7 @@ and runs the MolADT WL + bonding-system GP locally.
 ```bash
 make haskell-infer-benchmark
 make haskell-freesolv-20split
+make haskell-freesolv-feature-list
 ```
 
 Direct form:
@@ -33,6 +34,14 @@ make haskell-freesolv-20split
 stack run moladtbayes -- freesolv-wl-system-gp --all-splits \
   --split-json data/freesolv_wl_system_20_splits.json \
   --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv
+```
+
+The feature-document target writes the exact token names used by the GP:
+
+```bash
+make haskell-freesolv-feature-list
+stack run moladtbayes -- freesolv-wl-system-features \
+  --output docs/freesolv-gp-feature-list.md
 ```
 
 ## Methods
@@ -87,6 +96,9 @@ counts, RMSE, MAE, R2, mean predictive standard deviation, and 90% coverage.
 It uses parsed MolADT molecules directly: element symbols, formal charges,
 shell/orbital occupancy, effective edge order, shared electrons, and
 bonding-system overlap all enter the token kernels.
+
+The literal feature names are listed in
+[FreeSolv GP feature list](freesolv-gp-feature-list.md).
 
 ## Data Location
 

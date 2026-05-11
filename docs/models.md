@@ -40,6 +40,9 @@ make haskell-freesolv-20split
 That target reads `data/freesolv_wl_system_20_splits.json` and writes a CSV to
 `results/freesolv_20split/`.
 
+The exact Haskell token vocabulary used by the default GP is documented in
+[FreeSolv GP feature list](freesolv-gp-feature-list.md).
+
 ## What The Features Are
 
 Python builds MolADT molecules, computes MolADT-native descriptors, and writes
@@ -70,6 +73,10 @@ Python MolADT-only FreeSolv GP:
 - the exact GP combines Tanimoto kernels over WL + bonding-system tokens,
   bonding-system tokens, and WL graph tokens
 - the default split is the same seed-18 single split used by the Python repo
+
+Use `make haskell-freesolv-feature-list` to regenerate
+[FreeSolv GP feature list](freesolv-gp-feature-list.md) from the current SDF
+parser and FreeSolv export.
 
 The kernel is:
 

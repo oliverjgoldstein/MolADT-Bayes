@@ -23,7 +23,7 @@ Molecule = atoms + bonding systems + stereochemistry
 [Representation](docs/representation.md) | [Examples](docs/examples.md) |
 [Equality](docs/molecule-equality.md) | [CLI](docs/cli-and-demo.md) |
 [Parsing](docs/parsing.md) | [Viewer](docs/parsing.md#viewer) | [Validator](#validator) |
-[Inference](docs/inference.md)
+[Inference](docs/inference.md) | [GP Features](docs/freesolv-gp-feature-list.md)
 
 ## FreeSolv GP Model
 
@@ -63,6 +63,10 @@ The feature map is built from the ADT, not from notation strings:
 - **System tokens** keep information that a plain graph loses, especially
   ionic contacts, delocalisation, bridges, coordination, and overlapping
   systems.
+
+The full Haskell FreeSolv GP feature vocabulary is listed in
+[GP Features](docs/freesolv-gp-feature-list.md). It records every sparse token
+name used by `freesolv-wl-system-gp` on the current FreeSolv export.
 
 ### Kernel Choice
 
@@ -127,6 +131,7 @@ Read more:
 
 - [MolADT ADT Representation](docs/data-model.md)
 - [MolADT Representation](docs/representation.md)
+- [FreeSolv GP feature list](docs/freesolv-gp-feature-list.md)
 
 ## The Shape
 
@@ -307,6 +312,7 @@ For the full first-run path, use [Quickstart](docs/quickstart.md).
 | Check parser scope and validation rules | [SMILES Scope and Validation](docs/smiles-scope-and-validation.md) |
 | Run the Haskell benchmark consumer | [Inference](docs/inference.md) |
 | Understand exported feature matrices | [Models and Exported Features](docs/models.md) |
+| Inspect every FreeSolv GP feature name | [FreeSolv GP Feature List](docs/freesolv-gp-feature-list.md) |
 | Work across the Python repo boundary | [Python Interop](docs/python-interop.md) |
 | Find files quickly | [Repo Map](docs/repo-map.md) |
 | Run tests | [Testing](docs/testing.md) |
@@ -323,7 +329,9 @@ stack run moladtbayes -- pretty-example diborane --viewer-output results/viewer/
 stack run moladtbayes -- pretty-example sodium_chloride --viewer-output results/viewer/sodium-chloride.viewer.html
 stack run moladtbayes -- to-smiles molecules/benzene.sdf
 stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+stack run moladtbayes -- freesolv-wl-system-features --output docs/freesolv-gp-feature-list.md
 make haskell-freesolv-20split
+make haskell-freesolv-feature-list
 make haskell-test
 make haskell-viewer
 make haskell-demo
@@ -347,6 +355,8 @@ The Haskell benchmark path is intentionally narrow:
   `data/freesolv_wl_system_seed18_split.json`
 - `make haskell-freesolv-20split` uses `data/freesolv_wl_system_20_splits.json`
   and writes repeated-split metrics under `results/freesolv_20split/`
+- `make haskell-freesolv-feature-list` regenerates
+  `docs/freesolv-gp-feature-list.md` from the Haskell parser and tokenizer
 - the Python repo owns the A/B/C representation ablation and the paper artifacts
 
 ## Scope

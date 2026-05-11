@@ -8,6 +8,7 @@ module FreeSolvWLBondingGP
   , defaultFreeSolvWLBondingConfig
   , runFreeSolvWLBondingGP
   , runFreeSolvWLBondingGPSplits
+  , writeFreeSolvWLBondingFeatureDoc
   , printFreeSolvWLBondingResult
   , printFreeSolvWLBondingSummary
   ) where
@@ -28,9 +29,10 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
 import qualified GaussianProcess as GP
 import qualified Orbital as Orb
-import           System.Directory (doesFileExist)
-import           System.FilePath ((</>))
+import           System.Directory (createDirectoryIfMissing, doesFileExist)
+import           System.FilePath (takeDirectory, (</>))
 import           System.Random (StdGen, mkStdGen, randomR)
+import           System.IO (Handle, IOMode(WriteMode), hPutStrLn, withFile)
 import           Text.Printf (printf)
 import           Text.Read (readMaybe)
 
@@ -149,23 +151,105 @@ runFreeSolvWLBondingGPSplits config = do
   maybe (pure ()) (`writeResultsCsv` results) (wlOutputCsv config)
   pure results
 
+writeFreeSolvWLBondingFeatureDoc :: FreeSolvWLBondingConfig -> FilePath -> IO ()
+writeFreeSolvWLBondingFeatureDoc config outputPath = do
+  views <- loadFreeSolvTokenViews config
+  let rows = featureRows views
+      familyCounts =
+        M.toAscList $
+          M.fromListWith (+)
+            [ ((groupName, familyName), 1 :: Int)
+            | (_, groupName, familyName, _) <- rows
+            ]
+      wlCount = length [() | (_, "wl_graph", _, _) <- rows]
+      systemCount = length [() | (_, "bonding_system", _, _) <- rows]
+  createDirectoryIfMissing True (takeDirectory outputPath)
+  withFile outputPath WriteMode $ \handle -> do
+    hPutStrLn handle "# FreeSolv GP Feature List"
+    hPutStrLn handle ""
+    hPutStrLn handle "This is the literal feature vocabulary used by the Haskell `freesolv-wl-system-gp` command on the current FreeSolv data export. The GP does not use SMILES, RDKit fingerprints, or 3D geometry in this feature map. Each line below is a sparse count feature name."
+    hPutStrLn handle ""
+    hPutStrLn handle "## Counts"
+    hPutStrLn handle ""
+    hPutStrLn handle ("- total features: `" ++ show (length rows) ++ "`")
+    hPutStrLn handle ("- WL graph-token features: `" ++ show wlCount ++ "`")
+    hPutStrLn handle ("- bonding-system token features: `" ++ show systemCount ++ "`")
+    hPutStrLn handle ""
+    hPutStrLn handle "## Feature Families"
+    hPutStrLn handle ""
+    mapM_
+      (\((groupName, familyName), count) ->
+         hPutStrLn handle $
+           "- `" ++ groupName ++ "` / `" ++ familyName ++ "`: `" ++ show count ++ "`"
+      )
+      familyCounts
+    hPutStrLn handle ""
+    hPutStrLn handle "## What The Names Mean"
+    hPutStrLn handle ""
+    hPutStrLn handle "- `wl_graph / edge_label`: one count for each typed edge label seen in FreeSolv. These encode element pair, effective bond-order bucket, bonding-system overlap count, shared-electron count, member-edge count, and bonding-system kind."
+    hPutStrLn handle "- `wl_graph / wl0`: atom-label counts before WL propagation. These encode element, formal charge bucket, shell count, orbital count, total shell electrons, and orbital occupancy signature."
+    hPutStrLn handle "- `wl_graph / wl1` through `wl_graph / wl4`: Weisfeiler-Lehman neighbourhood labels after one to four rounds of neighbourhood aggregation. These are long because each token contains the sorted labelled neighbourhood around an atom."
+    hPutStrLn handle "- `bonding_system / atom`: atom element plus formal-charge count tokens."
+    hPutStrLn handle "- `bonding_system / atom_shell`: atom element plus shell/orbital occupancy count tokens."
+    hPutStrLn handle "- `bonding_system / edge`: edge element pair plus effective order count tokens."
+    hPutStrLn handle "- `bonding_system / edge_overlap`: edge element pair, effective order, and number of bonding systems sharing the edge."
+    hPutStrLn handle "- `bonding_system / edge_charge`: edge element pair, endpoint formal charges, and effective order."
+    hPutStrLn handle "- `bonding_system / edge_in_system`: edge element pair, effective order, shared electrons, member-edge count, and bonding-system kind for each system using that edge."
+    hPutStrLn handle "- `bonding_system / system`: whole bonding-system summary by shared electrons, member atom count, member edge count, and kind."
+    hPutStrLn handle "- `bonding_system / system_atoms`: whole bonding-system summary including member atom symbols."
+    hPutStrLn handle "- `bonding_system / system_edges`: whole bonding-system summary including member edge element pairs."
+    hPutStrLn handle ""
+    hPutStrLn handle "## Full List"
+    writeFeatureRows handle rows Nothing
+
+featureRows :: V.Vector TokenViews -> [(Int, String, String, String)]
+featureRows viewVector =
+  zipWith rowFor [0 ..] (wlNames ++ systemNames)
+  where
+    views = V.toList viewVector
+    wlNames =
+      [ ("wl_graph", name)
+      | name <- S.toAscList (S.unions (map (M.keysSet . wlTokens) views))
+      ]
+    systemNames =
+      [ ("bonding_system", name)
+      | name <- S.toAscList (S.unions (map (M.keysSet . systemTokens) views))
+      ]
+    rowFor index (groupName, name) =
+      (index, groupName, featureFamily name, name)
+
+featureFamily :: String -> String
+featureFamily = takeWhile (/= ':')
+
+writeFeatureRows :: Handle -> [(Int, String, String, String)] -> Maybe (String, String) -> IO ()
+writeFeatureRows _ [] _ = pure ()
+writeFeatureRows handle ((index, groupName, familyName, name) : rest) currentSection = do
+  let section = Just (groupName, familyName)
+  unless (section == currentSection) $ do
+    hPutStrLn handle ""
+    hPutStrLn handle ("### " ++ groupName ++ " / " ++ familyName)
+    hPutStrLn handle ""
+  hPutStrLn handle (show index ++ ". `" ++ name ++ "`")
+  writeFeatureRows handle rest section
+
+loadFreeSolvTokenViews :: FreeSolvWLBondingConfig -> IO (V.Vector TokenViews)
+loadFreeSolvTokenViews config = do
+  rows <- loadFreeSolvRows (wlProcessedDir config </> "freesolv_moladt_featurized_features.csv")
+  views <- forM rows $ \row -> do
+    molecule <- loadFreeSolvMolecule config row
+    pure (tokenViews molecule)
+  pure (V.fromList views)
+
 loadPreparedFreeSolv :: FreeSolvWLBondingConfig -> IO PreparedFreeSolv
 loadPreparedFreeSolv config = do
   rows <- loadFreeSolvRows (wlProcessedDir config </> "freesolv_moladt_featurized_features.csv")
   observations <- forM rows $ \row -> do
-    let sdfPath = wlRawSdfDir config </> rowMolId row ++ ".sdf"
-    exists <- doesFileExist sdfPath
-    unless exists $
-      fail ("Missing FreeSolv SDF for " ++ rowMolId row ++ ": " ++ sdfPath)
-    parsed <- readSDF sdfPath
-    case parsed of
-      Left err -> fail ("Could not parse " ++ sdfPath ++ ": " ++ show err)
-      Right molecule ->
-        pure Observation
-          { observationMolId = rowMolId row
-          , observationTarget = rowTarget row
-          , observationMol = molecule
-          }
+    molecule <- loadFreeSolvMolecule config row
+    pure Observation
+      { observationMolId = rowMolId row
+      , observationTarget = rowTarget row
+      , observationMol = molecule
+      }
   let observationVector = V.fromList observations
       viewVector = V.map (tokenViews . observationMol) observationVector
       fullKernel = fullKernelMatrix viewVector
@@ -180,6 +264,17 @@ loadPreparedFreeSolv config = do
     , preparedKernel = fullKernel
     , preparedIndexById = byId
     }
+
+loadFreeSolvMolecule :: FreeSolvWLBondingConfig -> FreeSolvRow -> IO Molecule
+loadFreeSolvMolecule config row = do
+  let sdfPath = wlRawSdfDir config </> rowMolId row ++ ".sdf"
+  exists <- doesFileExist sdfPath
+  unless exists $
+    fail ("Missing FreeSolv SDF for " ++ rowMolId row ++ ": " ++ sdfPath)
+  parsed <- readSDF sdfPath
+  case parsed of
+    Left err -> fail ("Could not parse " ++ sdfPath ++ ": " ++ show err)
+    Right molecule -> pure molecule
 
 evaluateSplit :: PreparedFreeSolv -> ResolvedSplit -> IO FreeSolvWLBondingResult
 evaluateSplit prepared splitInfo = do

@@ -52,6 +52,7 @@ starts.
 ```bash
 make haskell-infer-benchmark
 make haskell-freesolv-20split
+make haskell-freesolv-feature-list
 ```
 
 This runs the MolADT WL + bonding-system GP on the same seed-18 FreeSolv split
@@ -73,6 +74,10 @@ MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
 `data/freesolv_wl_system_20_splits.json` file and writes repeated-split metrics
 to `results/freesolv_20split/run_<timestamp>/freesolv_wl_system_20split.csv`.
 
+`make haskell-freesolv-feature-list` regenerates
+`docs/freesolv-gp-feature-list.md`, the full list of sparse token names used by
+the default GP.
+
 ## Common Fixes
 
 - Missing Stack: run `make haskell-build` and follow the install hint.
@@ -80,4 +85,5 @@ to `results/freesolv_20split/run_<timestamp>/freesolv_wl_system_20split.csv`.
 - Unsure what command exists: run `make help`.
 
 Next: [CLI and demo](cli-and-demo.md), [Inference](inference.md),
+[FreeSolv GP feature list](freesolv-gp-feature-list.md),
 [Python interop](python-interop.md).

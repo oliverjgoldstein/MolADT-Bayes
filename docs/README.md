@@ -26,6 +26,7 @@ bonding systems.
 
 - [Models and exported features](models.md): what model lives here.
 - [Inference](inference.md): how the Haskell benchmark consumer runs.
+- [FreeSolv GP feature list](freesolv-gp-feature-list.md): literal Haskell WL and bonding-system token names used by the default GP.
 - [Python interop](python-interop.md): how Haskell reads Python exports.
 
 ## Reference

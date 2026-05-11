@@ -7,6 +7,7 @@ WL_OUTPUT ?= results/$(WL_RESULTS_SUBDIR)/freesolv_wl_system_gp.csv
 WL_20_SPLIT_JSON ?= data/freesolv_wl_system_20_splits.json
 WL_20_SPLIT_RESULTS_SUBDIR ?= freesolv_20split/run_$(RUN_TIMESTAMP)
 WL_20_SPLIT_OUTPUT ?= results/$(WL_20_SPLIT_RESULTS_SUBDIR)/freesolv_wl_system_20split.csv
+WL_FEATURE_DOC ?= docs/freesolv-gp-feature-list.md
 ROW_LIMIT ?=
 ROW_LIMIT_SCOPE := $(if $(strip $(ROW_LIMIT)),limit_$(ROW_LIMIT),full)
 ROW_LIMIT_DISPLAY := $(if $(strip $(ROW_LIMIT)),$(ROW_LIMIT),full)
@@ -35,7 +36,7 @@ AUTO_APPROVE_FIXES ?= 0
 TESTED_GHC := 9.6.5
 TESTED_STACK_RESOLVER := lts-22.25
 
-.PHONY: help haskell-check-stack haskell-check-dataset-data haskell-check-sdf-timing-data haskell-build haskell-test haskell-demo haskell-infer-benchmark haskell-freesolv-20split haskell-inverse-design haskell-parse haskell-parse-smiles haskell-parse-sdf-timing haskell-to-smiles haskell-view haskell-viewer view molecule-viewer
+.PHONY: help haskell-check-stack haskell-check-dataset-data haskell-check-sdf-timing-data haskell-build haskell-test haskell-demo haskell-infer-benchmark haskell-freesolv-20split haskell-freesolv-feature-list haskell-inverse-design haskell-parse haskell-parse-smiles haskell-parse-sdf-timing haskell-to-smiles haskell-view haskell-viewer view molecule-viewer
 
 help:
 	@printf "%s\n" \
@@ -45,6 +46,7 @@ help:
 	"  make haskell-demo           Run the demo executable" \
 	"  make haskell-infer-benchmark Run the MolADT WL + bonding-system GP benchmark" \
 	"  make haskell-freesolv-20split Run the MolADT WL + bonding-system GP over 20 splits" \
+	"  make haskell-freesolv-feature-list Write the Haskell FreeSolv GP feature-name doc" \
 	"  make haskell-inverse-design Run legacy exported-feature FreeSolv inverse design" \
 	"  make haskell-parse          Parse molecules/benzene.sdf" \
 	"  make haskell-parse-smiles   Parse c1ccccc1" \
@@ -63,6 +65,7 @@ help:
 	"  wl_output=$(WL_OUTPUT)" \
 	"  wl_20_split_json=$(WL_20_SPLIT_JSON)" \
 	"  wl_20_split_output=$(WL_20_SPLIT_OUTPUT)" \
+	"  wl_feature_doc=$(WL_FEATURE_DOC)" \
 	"  inverse_design_target=$(TARGET)" \
 	"  inverse_design_seed=$(SEED_MOLECULE)" \
 	"  viewer_input=$(VIEWER_INPUT)" \
@@ -317,6 +320,17 @@ haskell-freesolv-20split: haskell-check-stack
 	@find results/freesolv_20split -mindepth 1 -maxdepth 1 -type d -name 'run_*' -exec rm -rf {} + 2>/dev/null || true
 	@mkdir -p "$(dir $(WL_20_SPLIT_OUTPUT))"
 	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --all-splits --split-json "$(WL_20_SPLIT_JSON)" --output "$(WL_20_SPLIT_OUTPUT)"
+
+haskell-freesolv-feature-list: haskell-check-stack
+	@printf "%s\n" \
+	"Writing Haskell FreeSolv GP feature-name documentation." \
+	"  repo: MolADT-Bayes-Haskell" \
+	"  output: $(WL_FEATURE_DOC)" \
+	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
+	"  delegated Python repo for missing exports: $(PYTHON_REPO_DIR)" \
+	"  stack_cmd: $(STACK_CMD)"
+	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="$(DATASET_PREFIX)" haskell-check-dataset-data
+	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-features --output "$(WL_FEATURE_DOC)"
 
 haskell-inverse-design: haskell-check-stack
 	@printf "%s\n" \
