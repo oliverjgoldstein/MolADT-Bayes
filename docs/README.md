@@ -22,11 +22,12 @@ bonding systems.
 - [Examples](examples.md): benzene, water, morphine, diborane, ferrocene, sodium chloride.
 - [Molecule equality](molecule-equality.md): compare reordered MolADT values.
 
-## Bayesian Path
+## Benchmarking Path
 
-- [Models and exported features](models.md): what model lives here.
+- [Benchmarking models and exported features](models.md): what model lives here.
 - [Inference](inference.md): how the Haskell benchmark consumer runs.
-- [FreeSolv GP feature list](freesolv-gp-feature-list.md): literal Haskell WL and bonding-system token names used by the default GP.
+- [FreeSolv GP feature list](freesolv-gp-feature-list.md): latest 30-feature FreeSolv GP list.
+- [FreeSolv GP feature translations](freesolv-gp-feature-layman.md): plain-English explanation for each current feature.
 - [Python interop](python-interop.md): how Haskell reads Python exports.
 
 ## Reference

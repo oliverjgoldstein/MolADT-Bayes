@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module GaussianProcess
+module Benchmarking.GaussianProcess
   ( GaussianProcessParameters(..)
   , GaussianProcessSupport
   , defaultGaussianProcessFeatureCap
@@ -45,7 +45,7 @@ data GaussianProcessSupport = GaussianProcessSupport
 
 
 defaultGaussianProcessFeatureCap :: Int
-defaultGaussianProcessFeatureCap = 24
+defaultGaussianProcessFeatureCap = 30
 
 
 gaussianProcessFeatureNames :: GaussianProcessSupport -> [String]

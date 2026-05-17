@@ -32,5 +32,5 @@ result-*
 /logs/
 
 # Local scratch/reference files
-/benchmarks/
+/benchmarking/
 /2501.13633v3.pdf

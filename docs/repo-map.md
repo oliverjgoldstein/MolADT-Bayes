@@ -32,14 +32,15 @@ Use this page when you need to find the right file quickly.
 - [`src/ExampleMolecules/Ferrocene.hs`](../src/ExampleMolecules/Ferrocene.hs)
 - [`molecules/`](../molecules/): small SDF inputs.
 
-## Bayesian Work
+## Benchmarking
 
-- [`src/BenchmarkModel.hs`](../src/BenchmarkModel.hs): Haskell FreeSolv benchmark consumer.
-- [`src/GaussianProcess.hs`](../src/GaussianProcess.hs): exact GP linear algebra helpers.
-- [`src/FreeSolvWLBondingGP.hs`](../src/FreeSolvWLBondingGP.hs): MolADT-only WL + bonding-system FreeSolv GP.
-- [`docs/freesolv-gp-feature-list.md`](freesolv-gp-feature-list.md): exact Haskell WL and bonding-system token names for the default FreeSolv GP.
+- [`src/Benchmarking/BenchmarkModel.hs`](../src/Benchmarking/BenchmarkModel.hs): Haskell FreeSolv exported-matrix benchmark consumer.
+- [`src/Benchmarking/GaussianProcess.hs`](../src/Benchmarking/GaussianProcess.hs): exact GP linear algebra helpers for the 30-feature RBF path.
+- [`src/Benchmarking/FreeSolvWLBondingGP.hs`](../src/Benchmarking/FreeSolvWLBondingGP.hs): legacy MolADT-only WL + bonding-system FreeSolv GP.
+- [`docs/freesolv-gp-feature-list.md`](freesolv-gp-feature-list.md): latest 30-feature FreeSolv GP list.
+- [`docs/freesolv-gp-feature-layman.md`](freesolv-gp-feature-layman.md): plain-English descriptions for the current 30 features.
 - [`src/LazyPPL.hs`](../src/LazyPPL.hs): `mh` and `lwis` kernels.
-- [`src/FreeSolvInverseDesign.hs`](../src/FreeSolvInverseDesign.hs): legacy exported-feature typed inverse-design search.
+- [`src/Benchmarking/FreeSolvInverseDesign.hs`](../src/Benchmarking/FreeSolvInverseDesign.hs): legacy exported-feature typed inverse-design search.
 
 ## Tests
 

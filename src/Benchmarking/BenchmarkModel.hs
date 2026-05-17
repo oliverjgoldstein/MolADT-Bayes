@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module BenchmarkModel
+module Benchmarking.BenchmarkModel
   ( BenchmarkInferenceMethod(..)
   , BenchmarkObservation(..)
   , BenchmarkDataset(..)
@@ -26,7 +26,7 @@ import Data.List (foldl', intercalate, isPrefixOf, isSuffixOf, sortOn, zipWith3)
 import Data.Ord (Down(..))
 import Data.Time.Clock (diffUTCTime, getCurrentTime)
 import Distr (normal)
-import GaussianProcess
+import Benchmarking.GaussianProcess
   ( GaussianProcessParameters(..)
   , GaussianProcessSupport
   , defaultGaussianProcessFeatureCap

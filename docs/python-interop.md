@@ -61,4 +61,4 @@ The Haskell viewer also accepts that shared JSON boundary:
 stack run moladtbayes -- view-html benzene.moladt.json --format json --output results/viewer/benzene.viewer.html
 ```
 
-Next: [Models and exported features](models.md), [Inference](inference.md).
+Next: [Benchmarking models and exported features](models.md), [Inference](inference.md).

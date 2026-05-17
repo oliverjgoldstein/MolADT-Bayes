@@ -2,7 +2,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module FreeSolvWLBondingGP
+module Benchmarking.FreeSolvWLBondingGP
   ( FreeSolvWLBondingConfig(..)
   , FreeSolvWLBondingResult(..)
   , defaultFreeSolvWLBondingConfig
@@ -27,7 +27,7 @@ import qualified Data.Set as S
 import           GHC.Generics (Generic)
 import qualified Data.Vector as V
 import qualified Data.Vector.Unboxed as U
-import qualified GaussianProcess as GP
+import qualified Benchmarking.GaussianProcess as GP
 import qualified Orbital as Orb
 import           System.Directory (createDirectoryIfMissing, doesFileExist)
 import           System.FilePath (takeDirectory, (</>))

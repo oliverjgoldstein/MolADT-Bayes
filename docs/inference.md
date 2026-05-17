@@ -2,53 +2,31 @@
 
 The Haskell repo is the FreeSolv benchmark consumer.
 
-It does not own the full benchmark pipeline. Python writes the processed
-`mol_id`/target exports. Haskell reads them, parses the matching SDF molecules,
-and runs the MolADT WL + bonding-system GP locally.
+Python owns the full benchmark pipeline and writes the processed FreeSolv
+exports. Haskell reads those matrices and runs the local 30-feature RBF GP
+consumer.
 
 ## Main Command
 
 ```bash
 make haskell-infer-benchmark
-make haskell-freesolv-20split
-make haskell-freesolv-feature-list
 ```
 
 Direct form:
 
 ```bash
-stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-The default command uses the repo-local seed-18 split:
+The Makefile path uses:
 
-```bash
-stack run moladtbayes -- freesolv-wl-system-gp \
-  --split-json data/freesolv_wl_system_seed18_split.json
-```
-
-The repeated-split target uses the committed 20-split JSON:
-
-```bash
-make haskell-freesolv-20split
-stack run moladtbayes -- freesolv-wl-system-gp --all-splits \
-  --split-json data/freesolv_wl_system_20_splits.json \
-  --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv
-```
-
-The feature-document target writes the exact token names used by the GP:
-
-```bash
-make haskell-freesolv-feature-list
-stack run moladtbayes -- freesolv-wl-system-features \
-  --output docs/freesolv-gp-feature-list.md
+```text
+dataset_prefix=freesolv_moladt_featurized
+method=mh:0.2
+feature_cap=30
 ```
 
 ## Methods
-
-The default `freesolv-wl-system-gp` command is an exact empirical-Bayes GP. The
-older `infer-benchmark` consumer remains available for exported feature-matrix
-experiments.
 
 Accepted method strings:
 
@@ -57,19 +35,11 @@ Accepted method strings:
 - `lwis`
 - `lwis:<particles>`
 
-Example:
+Examples:
 
 ```bash
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized lwis:64 128
-```
-
-The default Makefile path uses:
-
-```text
-model=MolADT WL + bonding-system GP
-seed=18
-split_json=data/freesolv_wl_system_seed18_split.json
 ```
 
 ## What It Prints
@@ -91,14 +61,10 @@ After inference, it prints:
 - per-test-row predictions
 - test metrics
 
-The WL + bonding-system command prints the split source, train+valid and test
-counts, RMSE, MAE, R2, mean predictive standard deviation, and 90% coverage.
-It uses parsed MolADT molecules directly: element symbols, formal charges,
-shell/orbital occupancy, effective edge order, shared electrons, and
-bonding-system overlap all enter the token kernels.
-
-The literal feature names are listed in
-[FreeSolv GP feature list](freesolv-gp-feature-list.md).
+The legacy `freesolv-wl-system-gp` command still prints its split source,
+train+valid and test counts, RMSE, MAE, R2, mean predictive standard deviation,
+and 90% coverage. Keep it for tokenizer diagnostics rather than the main
+FreeSolv result.
 
 ## Data Location
 
@@ -115,4 +81,4 @@ MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
   stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-Next: [Models and exported features](models.md), [Python interop](python-interop.md).
+Next: [Benchmarking models and exported features](models.md), [Python interop](python-interop.md).

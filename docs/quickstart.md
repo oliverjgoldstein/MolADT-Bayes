@@ -51,13 +51,10 @@ starts.
 
 ```bash
 make haskell-infer-benchmark
-make haskell-freesolv-20split
-make haskell-freesolv-feature-list
 ```
 
-This runs the MolADT WL + bonding-system GP on the same seed-18 FreeSolv split
-used by the Python repo. It reads processed `mol_id`/target exports from the
-sibling Python repo and parses the matching SDF molecules locally:
+This runs the 30-feature exported-matrix RBF GP benchmark. It reads processed
+feature and target exports from the sibling Python repo:
 
 ```bash
 ../MolADT-Bayes-Python/data/processed
@@ -67,16 +64,16 @@ Override that path with:
 
 ```bash
 MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
-  stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-`make haskell-freesolv-20split` uses the committed
-`data/freesolv_wl_system_20_splits.json` file and writes repeated-split metrics
-to `results/freesolv_20split/run_<timestamp>/freesolv_wl_system_20split.csv`.
+`make haskell-freesolv-20split` still runs the legacy WL-token GP over the
+committed `data/freesolv_wl_system_20_splits.json` file for diagnostics.
 
 `make haskell-freesolv-feature-list` regenerates
-`docs/freesolv-gp-feature-list.md`, the full list of sparse token names used by
-the default GP.
+`docs/freesolv-wl-token-feature-list.md`, the sparse token names used by the
+legacy GP. The current 30-feature paper list lives in
+`docs/freesolv-gp-feature-list.md`.
 
 ## Common Fixes
 
@@ -86,4 +83,5 @@ the default GP.
 
 Next: [CLI and demo](cli-and-demo.md), [Inference](inference.md),
 [FreeSolv GP feature list](freesolv-gp-feature-list.md),
+[FreeSolv GP feature translations](freesolv-gp-feature-layman.md),
 [Python interop](python-interop.md).

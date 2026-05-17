@@ -29,7 +29,7 @@ library
         Group
         Orbital
         SlaterTypeOrbital
-        GaussianProcess
+        Benchmarking.GaussianProcess
         Chem.IO.SDF
         Chem.IO.MoleculeJSON
         Chem.IO.SMILES
@@ -44,9 +44,9 @@ library
         ExampleMolecules.Ferrocene
         ExampleMolecules.Morphine
         PrettyBenzene
-        BenchmarkModel
-        FreeSolvInverseDesign
-        FreeSolvWLBondingGP
+        Benchmarking.BenchmarkModel
+        Benchmarking.FreeSolvInverseDesign
+        Benchmarking.FreeSolvWLBondingGP
     other-modules:
         ExtraF
         Chem.Molecule.Coordinate

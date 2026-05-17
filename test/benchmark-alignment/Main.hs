@@ -1,6 +1,6 @@
 module Main where
 
-import BenchmarkModel
+import Benchmarking.BenchmarkModel
   ( defaultProcessedDataDir
   , featureNames
   , loadBenchmarkDataset
@@ -11,7 +11,7 @@ import BenchmarkModel
   )
 import Chem.Molecule (atoms)
 import Chem.Validate (validateMolecule)
-import FreeSolvInverseDesign
+import Benchmarking.FreeSolvInverseDesign
   ( Candidate(..)
   , InverseDesignConfig(..)
   , Prediction(..)

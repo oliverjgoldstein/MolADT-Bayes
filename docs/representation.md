@@ -43,7 +43,7 @@ follow.
 
 ## Why This Matters
 
-Bayesian tasks need to inspect and modify molecules repeatedly.
+Benchmarking tasks need to inspect and modify molecules repeatedly.
 
 With MolADT, a proposal kernel can edit an atom, add a bond, change terminal
 hydrogens, or add a Dietz system directly. It does not have to rewrite a string
@@ -189,4 +189,4 @@ instance too.
 - [ADT data model](data-model.md)
 - [Examples](examples.md)
 - [Orbitals](orbitals.md)
-- [Models and exported features](models.md)
+- [Benchmarking models and exported features](models.md)

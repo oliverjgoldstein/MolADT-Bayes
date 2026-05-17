@@ -7,7 +7,7 @@ WL_OUTPUT ?= results/$(WL_RESULTS_SUBDIR)/freesolv_wl_system_gp.csv
 WL_20_SPLIT_JSON ?= data/freesolv_wl_system_20_splits.json
 WL_20_SPLIT_RESULTS_SUBDIR ?= freesolv_20split/run_$(RUN_TIMESTAMP)
 WL_20_SPLIT_OUTPUT ?= results/$(WL_20_SPLIT_RESULTS_SUBDIR)/freesolv_wl_system_20split.csv
-WL_FEATURE_DOC ?= docs/freesolv-gp-feature-list.md
+WL_FEATURE_DOC ?= docs/freesolv-wl-token-feature-list.md
 ROW_LIMIT ?=
 ROW_LIMIT_SCOPE := $(if $(strip $(ROW_LIMIT)),limit_$(ROW_LIMIT),full)
 ROW_LIMIT_DISPLAY := $(if $(strip $(ROW_LIMIT)),$(ROW_LIMIT),full)
@@ -44,9 +44,9 @@ help:
 	"  make haskell-build          Build the Haskell project" \
 	"  make haskell-test           Run the Haskell test suites" \
 	"  make haskell-demo           Run the demo executable" \
-	"  make haskell-infer-benchmark Run the MolADT WL + bonding-system GP benchmark" \
-	"  make haskell-freesolv-20split Run the MolADT WL + bonding-system GP over 20 splits" \
-	"  make haskell-freesolv-feature-list Write the Haskell FreeSolv GP feature-name doc" \
+		"  make haskell-infer-benchmark Run the 30-feature exported-matrix RBF GP benchmark" \
+		"  make haskell-freesolv-20split Run the legacy WL + bonding-system GP over 20 splits" \
+		"  make haskell-freesolv-feature-list Write the legacy WL token feature-name doc" \
 	"  make haskell-inverse-design Run legacy exported-feature FreeSolv inverse design" \
 	"  make haskell-parse          Parse molecules/benzene.sdf" \
 	"  make haskell-parse-smiles   Parse c1ccccc1" \
@@ -293,24 +293,23 @@ haskell-demo: haskell-check-stack
 
 haskell-infer-benchmark: haskell-check-stack
 	@printf "%s\n" \
-	"Running Haskell MolADT WL + bonding-system GP benchmark." \
+	"Running Haskell 30-feature exported-matrix RBF GP benchmark." \
 	"  repo: MolADT-Bayes-Haskell" \
-	"  model: MolADT WL + bonding-system empirical-Bayes GP" \
-	"  seed: $(WL_SEED)" \
-	"  output: $(WL_OUTPUT)" \
+	"  model: screened 30-feature exported-matrix RBF GP" \
+	"  dataset_prefix: $(DATASET_PREFIX)" \
+	"  method: $(METHOD)" \
+	"  row_limit: $(ROW_LIMIT_DISPLAY)" \
 	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \
 	"  delegated Python repo for missing exports: $(PYTHON_REPO_DIR)" \
 	"  stack_cmd: $(STACK_CMD)"
 	@$(MAKE) --no-print-directory REQUIRED_DATASET_PREFIX="$(DATASET_PREFIX)" haskell-check-dataset-data
-	@find results/freesolv -mindepth 1 -maxdepth 1 -type d -name 'run_*' -exec rm -rf {} + 2>/dev/null || true
-	@mkdir -p "$(dir $(WL_OUTPUT))"
-	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- freesolv-wl-system-gp --seed $(WL_SEED) --output "$(WL_OUTPUT)"
+	MOLADT_PROCESSED_DATA_DIR="$(PROCESSED_DATA_DIR)" $(STACK_CMD) run moladtbayes -- infer-benchmark "$(DATASET_PREFIX)" "$(METHOD)" $(ROW_LIMIT)
 
 haskell-freesolv-20split: haskell-check-stack
 	@printf "%s\n" \
-	"Running Haskell FreeSolv 20-split MolADT WL + bonding-system GP." \
+	"Running legacy Haskell FreeSolv 20-split WL + bonding-system GP." \
 	"  repo: MolADT-Bayes-Haskell" \
-	"  model: MolADT WL + bonding-system empirical-Bayes GP" \
+	"  model: legacy MolADT WL + bonding-system empirical-Bayes GP" \
 	"  split_json: $(WL_20_SPLIT_JSON)" \
 	"  output: $(WL_20_SPLIT_OUTPUT)" \
 	"  processed_data_dir: $(PROCESSED_DATA_DIR)" \

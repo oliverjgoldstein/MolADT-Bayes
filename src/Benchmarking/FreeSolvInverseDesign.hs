@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module FreeSolvInverseDesign
+module Benchmarking.FreeSolvInverseDesign
   ( Prediction(..)
   , Candidate(..)
   , SearchDiagnostics(..)
@@ -15,7 +15,7 @@ module FreeSolvInverseDesign
   , printSearchResult
   ) where
 
-import           BenchmarkModel
+import           Benchmarking.BenchmarkModel
   ( BenchmarkDataset(..)
   , BenchmarkObservation(..)
   , loadBenchmarkDataset

@@ -1,6 +1,6 @@
 module Main where
 
-import           BenchmarkModel
+import           Benchmarking.BenchmarkModel
   ( BenchmarkInferenceMethod(..)
   , defaultProcessedDataDir
   , defaultSamplingConfig
@@ -25,14 +25,14 @@ import           ExampleMolecules.Diborane (diboranePretty)
 import           ExampleMolecules.Benzene (benzenePretty)
 import           ExampleMolecules.Ferrocene (ferrocenePretty)
 import           ExampleMolecules.Morphine (morphinePretty)
-import           FreeSolvInverseDesign
+import           Benchmarking.FreeSolvInverseDesign
   ( InverseDesignConfig(..)
   , defaultInverseDesignConfig
   , parseSeedMoleculeName
   , printSearchResult
   , runFreeSolvInverseDesign
   )
-import           FreeSolvWLBondingGP
+import           Benchmarking.FreeSolvWLBondingGP
   ( FreeSolvWLBondingConfig(..)
   , defaultFreeSolvWLBondingConfig
   , printFreeSolvWLBondingResult
@@ -100,11 +100,13 @@ usage = unlines
   , "  stack run moladtbayes -- to-smiles molecules/benzene.sdf"
   , "  stack run moladtbayes -- to-json molecules/benzene.sdf > benzene.moladt.json"
   , "  stack run moladtbayes -- from-json benzene.moladt.json"
+  , "  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2"
+  , ""
+  , "Legacy diagnostics:"
   , "  stack run moladtbayes -- freesolv-wl-system-gp --seed 18"
   , "  stack run moladtbayes -- freesolv-wl-system-gp --split-json data/freesolv_wl_system_seed18_split.json"
   , "  stack run moladtbayes -- freesolv-wl-system-gp --all-splits --split-json data/freesolv_wl_system_20_splits.json --output results/freesolv_20split/run_manual/freesolv_wl_system_20split.csv"
-  , "  stack run moladtbayes -- freesolv-wl-system-features --output docs/freesolv-gp-feature-list.md"
-  , "  stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2"
+  , "  stack run moladtbayes -- freesolv-wl-system-features --output docs/freesolv-wl-token-feature-list.md"
   , "  stack run moladtbayes -- inverse-design --target -5.0 --seed-molecule water"
   , ""
   , "Optional environment variable:"

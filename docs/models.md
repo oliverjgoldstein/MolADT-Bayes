@@ -1,54 +1,38 @@
-# Models and Exported Features
+# Benchmarking Models and Exported Features
 
 This repo keeps the typed molecule implementation in Haskell and consumes the
 benchmark feature matrices exported by Python.
 
 ## What Lives Here
 
-The Haskell model path is narrow:
+The active Haskell benchmark path is narrow:
 
 - dataset: `freesolv_moladt_featurized`
-- default model: MolADT WL + bonding-system exact empirical-Bayes Gaussian process
-- paper ablation: A/B/C atom-bag/standard-covalent-graph/full-MolADT ladder in the Python repo
+- default command: `infer-benchmark freesolv_moladt_featurized mh:0.2`
+- default model family: exact RBF Gaussian process over 30 screened exported
+  MolADT features
+- paper ablation: A/B/C atom-bag/SMILES-graph/full-MolADT ladder in the Python
+  repo
 
 Run:
 
 ```bash
 make haskell-infer-benchmark
-make haskell-freesolv-20split
 ```
 
-For the MolADT-only WL + bonding-system GP:
+Direct form:
 
 ```bash
-stack run moladtbayes -- freesolv-wl-system-gp --seed 18
+stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-The default split is the repo-local seed-18 single split:
-
-```bash
-stack run moladtbayes -- freesolv-wl-system-gp \
-  --split-json data/freesolv_wl_system_seed18_split.json
-```
-
-For repeated-split uncertainty:
-
-```bash
-make haskell-freesolv-20split
-```
-
-That target reads `data/freesolv_wl_system_20_splits.json` and writes a CSV to
-`results/freesolv_20split/`.
-
-The exact Haskell token vocabulary used by the default GP is documented in
-[FreeSolv GP feature list](freesolv-gp-feature-list.md).
+The older `freesolv-wl-system-gp` command remains available for legacy
+WL-token diagnostics, but it is no longer the default FreeSolv result to cite.
 
 ## What The Features Are
 
 Python builds MolADT molecules, computes MolADT-native descriptors, and writes
-standardized `X/y` matrices.
-
-Haskell reads:
+standardized `X/y` matrices. Haskell reads:
 
 - `<prefix>_X_train.csv`
 - `<prefix>_X_valid.csv`
@@ -57,60 +41,50 @@ Haskell reads:
 - `<prefix>_y_valid.csv`
 - `<prefix>_y_test.csv`
 
-## MolADT WL + Bonding-System GP
+For `freesolv_moladt_featurized`, Haskell chooses the strongest 30 exported
+features by training-set correlation and runs the RBF GP over that screened
+matrix.
 
-The `freesolv-wl-system-gp` command is the Haskell equivalent of the default
-Python MolADT-only FreeSolv GP:
+The latest paper-facing Python feature set is the fixed
+`moladt_full30_rbf_gp` list:
 
-- it reads `freesolv_moladt_featurized_features.csv` only for `mol_id` and
-  `expt`
-- it loads each matching FreeSolv SDF through the Haskell SDF parser
-- it does not use RDKit or SMILES features
-- atom labels include element symbol, formal-charge bucket, shell count,
-  orbital count, shell electron count, and shell occupancy signature
-- edge labels and system tokens are derived from MolADT bonding systems,
-  effective order, shared electrons, overlap count, and system kind
-- the exact GP combines Tanimoto kernels over WL + bonding-system tokens,
-  bonding-system tokens, and WL graph tokens
-- the default split is the same seed-18 single split used by the Python repo
+- 10 atom-count features
+- 10 graph-summary features
+- 10 MolADT descriptor additions
 
-Use `make haskell-freesolv-feature-list` to regenerate
-[FreeSolv GP feature list](freesolv-gp-feature-list.md) from the current SDF
-parser and FreeSolv export.
+That fixed list is documented in
+[FreeSolv GP feature list](freesolv-gp-feature-list.md), with a plain-English
+companion in [FreeSolv GP feature translations](freesolv-gp-feature-layman.md).
 
-The kernel is:
+## Kernel
+
+The active dense-descriptor GP uses an RBF kernel over standardized features:
 
 ```text
 k(x, x') =
-  w_all    * Tanimoto(WL + bonding-system tokens)
-  + w_sys  * Tanimoto(bonding-system tokens)
-  + w_wl   * Tanimoto(WL graph tokens)
+  signal_variance * exp(-||z(x) - z(x')||^2 / (2 * lengthscale^2))
 ```
 
-Tanimoto is used because the features are sparse non-negative token counts, so
-similarity should mean shared active chemistry relative to the union of active
-chemistry rather than Euclidean distance in a dense descriptor table.
+Haskell samples the mean offset, signal variance, lengthscale, and observation
+noise, then uses exact GP conditioning for validation and test predictions.
 
-On the local seed-18 split, the Haskell path reported
-`0.650917` kcal/mol RMSE and `0.408483` kcal/mol MAE on 65 held-out molecules.
+## Latest FreeSolv Result
 
-## Representation Ablation
+The latest FreeSolv paper result in the Python results tree is:
 
-The paper comparison is the Python A/B/C ablation rather than the legacy RBF
-descriptor GP:
+```text
+../MolADT-Bayes-Python/results/freesolv_ablation/run_20260512_small_feature_ablation/
+```
+
+Its 20-split test metrics are:
 
 | Label | Variant | Meaning | Test RMSE |
 | --- | --- | --- | ---: |
-| A | atom bag | atoms only, no connectivity | `1.857 +/- 0.361` |
-| B | standard covalent graph WL | atom labels plus a standard covalent bond-order adjacency graph | `1.049 +/- 0.142` |
-| C | full MolADT | Dietz edge labels plus explicit bonding-system tokens | `0.904 +/- 0.168` |
+| A | atom bag | 10 atom-count features | `1.971 +/- 0.567` |
+| B | SMILES adjacency graph | 20 graph-only features | `1.791 +/- 0.505` |
+| C | full MolADT | 30 features: graph baseline plus MolADT descriptors | `1.308 +/- 0.461` |
 
-That ladder is the direct test of the representation claim: no connectivity
-versus ordinary covalent graph structure versus explicit Dietz bonding systems.
-
-## Why This Matters
-
-MolADT gives Bayesian models an explicit typed generative state space. The
-model can work with molecule fields, not just strings or plain graph labels.
+The B-to-C comparison is the representation result: adding the MolADT
+descriptor block improves the same small RBF GP over the graph-only baseline.
 
 Next: [Inference](inference.md), [Python interop](python-interop.md).
