@@ -121,6 +121,24 @@ nominalValence symbol = case symbol of
     Fe -> (0, 12)
     I  -> (2, 2)
     Na -> (2, 2)
+    _  -> (0, 16)
+
+-- | Official element symbols, ordered by atomic number.
+allAtomicSymbols :: [AtomicSymbol]
+allAtomicSymbols =
+  [ H, He, Li, Be, B, C, N, O, F, Ne
+  , Na, Mg, Al, Si, P, S, Cl, Ar
+  , K, Ca, Sc, Ti, V, Cr, Mn, Fe, Co, Ni, Cu, Zn
+  , Ga, Ge, As, Se, Br, Kr
+  , Rb, Sr, Y, Zr, Nb, Mo, Tc, Ru, Rh, Pd, Ag, Cd
+  , In, Sn, Sb, Te, I, Xe
+  , Cs, Ba, La, Ce, Pr, Nd, Pm, Sm, Eu, Gd, Tb, Dy
+  , Ho, Er, Tm, Yb, Lu
+  , Hf, Ta, W, Re, Os, Ir, Pt, Au, Hg, Tl, Pb, Bi
+  , Po, At, Rn, Fr, Ra, Ac, Th, Pa, U, Np, Pu, Am
+  , Cm, Bk, Cf, Es, Fm, Md, No, Lr, Rf, Db, Sg, Bh
+  , Hs, Mt, Ds, Rg, Cn, Nh, Fl, Mc, Lv, Ts, Og
+  ]
 
 -- | Maximum number of bonds typically formed by an element, derived from the
 -- upper electron count in 'nominalValence'.
@@ -129,19 +147,154 @@ getMaxBondsSymbol sym =
     let (_, maxElectrons) = nominalValence sym
     in fromIntegral maxElectrons / 2.0
 
--- | Tabulate atomic numbers, atomic weights, and default shell data for the
--- supported elements.
-elementAttributes O = ElementAttributes O 8 15.999 (Just Orb.oxygen)
-elementAttributes H = ElementAttributes H 1 1.008 (Just Orb.hydrogen)
-elementAttributes N = ElementAttributes N 7 14.007 (Just Orb.nitrogen)
-elementAttributes C = ElementAttributes C 6 12.011 (Just Orb.carbon)
-elementAttributes B = ElementAttributes B 5 10.811 (Just Orb.boron)
-elementAttributes Fe = ElementAttributes Fe 26 55.845 (Just Orb.iron)
-elementAttributes F = ElementAttributes F 9 18.998 (Just Orb.fluorine)
-elementAttributes Cl = ElementAttributes Cl 17 35.453 (Just Orb.chlorine)
-elementAttributes S = ElementAttributes S 16 32.065 (Just Orb.sulfur)
-elementAttributes Br = ElementAttributes Br 35 79.904 (Just Orb.bromine)
-elementAttributes P = ElementAttributes P 15 30.974 (Just Orb.phosphorus)
-elementAttributes Si = ElementAttributes Si 14 28.085 (Just Orb.silicon)
-elementAttributes I = ElementAttributes I 53 126.904 (Just Orb.iodine)
-elementAttributes Na = ElementAttributes Na 11 22.990 (Just Orb.sodium)
+-- | Tabulate atomic numbers, atomic weights, and default shell data for all
+-- 118 currently official elements. Atomic weights use CIAAW 2024 standard
+-- atomic weights where a standard value exists. Radioactive elements without
+-- a standard atomic weight use NIST SP 966 June 2024 mass numbers for the
+-- longest-lived isotope.
+elementAttributes :: AtomicSymbol -> ElementAttributes
+elementAttributes atomSymbol =
+  case M.lookup atomSymbol elementDataMap of
+    Just (atomicNumberValue, atomicWeightValue) ->
+      ElementAttributes atomSymbol atomicNumberValue atomicWeightValue (M.lookup atomSymbol elementShellMap)
+    Nothing -> error ("Missing element attributes for " ++ show atomSymbol)
+
+elementDataMap :: M.Map AtomicSymbol (Int, Double)
+elementDataMap = M.fromList
+  [ (H, (1, 1.008))
+  , (He, (2, 4.002602))
+  , (Li, (3, 6.94))
+  , (Be, (4, 9.0121831))
+  , (B, (5, 10.81))
+  , (C, (6, 12.011))
+  , (N, (7, 14.007))
+  , (O, (8, 15.999))
+  , (F, (9, 18.998403162))
+  , (Ne, (10, 20.1797))
+  , (Na, (11, 22.98976928))
+  , (Mg, (12, 24.305))
+  , (Al, (13, 26.9815384))
+  , (Si, (14, 28.085))
+  , (P, (15, 30.973761998))
+  , (S, (16, 32.06))
+  , (Cl, (17, 35.45))
+  , (Ar, (18, 39.95))
+  , (K, (19, 39.0983))
+  , (Ca, (20, 40.078))
+  , (Sc, (21, 44.955907))
+  , (Ti, (22, 47.867))
+  , (V, (23, 50.9415))
+  , (Cr, (24, 51.9961))
+  , (Mn, (25, 54.938043))
+  , (Fe, (26, 55.845))
+  , (Co, (27, 58.933194))
+  , (Ni, (28, 58.6934))
+  , (Cu, (29, 63.546))
+  , (Zn, (30, 65.38))
+  , (Ga, (31, 69.723))
+  , (Ge, (32, 72.630))
+  , (As, (33, 74.921595))
+  , (Se, (34, 78.971))
+  , (Br, (35, 79.904))
+  , (Kr, (36, 83.798))
+  , (Rb, (37, 85.4678))
+  , (Sr, (38, 87.62))
+  , (Y, (39, 88.905838))
+  , (Zr, (40, 91.222))
+  , (Nb, (41, 92.90637))
+  , (Mo, (42, 95.95))
+  , (Tc, (43, 97.0))
+  , (Ru, (44, 101.07))
+  , (Rh, (45, 102.90549))
+  , (Pd, (46, 106.42))
+  , (Ag, (47, 107.8682))
+  , (Cd, (48, 112.414))
+  , (In, (49, 114.818))
+  , (Sn, (50, 118.710))
+  , (Sb, (51, 121.760))
+  , (Te, (52, 127.60))
+  , (I, (53, 126.90447))
+  , (Xe, (54, 131.293))
+  , (Cs, (55, 132.90545196))
+  , (Ba, (56, 137.327))
+  , (La, (57, 138.90547))
+  , (Ce, (58, 140.116))
+  , (Pr, (59, 140.90766))
+  , (Nd, (60, 144.242))
+  , (Pm, (61, 145.0))
+  , (Sm, (62, 150.36))
+  , (Eu, (63, 151.964))
+  , (Gd, (64, 157.249))
+  , (Tb, (65, 158.925354))
+  , (Dy, (66, 162.500))
+  , (Ho, (67, 164.930329))
+  , (Er, (68, 167.259))
+  , (Tm, (69, 168.934219))
+  , (Yb, (70, 173.045))
+  , (Lu, (71, 174.96669))
+  , (Hf, (72, 178.486))
+  , (Ta, (73, 180.94788))
+  , (W, (74, 183.84))
+  , (Re, (75, 186.207))
+  , (Os, (76, 190.23))
+  , (Ir, (77, 192.217))
+  , (Pt, (78, 195.084))
+  , (Au, (79, 196.966570))
+  , (Hg, (80, 200.592))
+  , (Tl, (81, 204.38))
+  , (Pb, (82, 207.2))
+  , (Bi, (83, 208.98040))
+  , (Po, (84, 209.0))
+  , (At, (85, 210.0))
+  , (Rn, (86, 222.0))
+  , (Fr, (87, 223.0))
+  , (Ra, (88, 226.0))
+  , (Ac, (89, 227.0))
+  , (Th, (90, 232.0377))
+  , (Pa, (91, 231.03588))
+  , (U, (92, 238.02891))
+  , (Np, (93, 237.0))
+  , (Pu, (94, 244.0))
+  , (Am, (95, 243.0))
+  , (Cm, (96, 247.0))
+  , (Bk, (97, 247.0))
+  , (Cf, (98, 251.0))
+  , (Es, (99, 252.0))
+  , (Fm, (100, 257.0))
+  , (Md, (101, 258.0))
+  , (No, (102, 259.0))
+  , (Lr, (103, 262.0))
+  , (Rf, (104, 267.0))
+  , (Db, (105, 268.0))
+  , (Sg, (106, 269.0))
+  , (Bh, (107, 270.0))
+  , (Hs, (108, 269.0))
+  , (Mt, (109, 277.0))
+  , (Ds, (110, 281.0))
+  , (Rg, (111, 282.0))
+  , (Cn, (112, 285.0))
+  , (Nh, (113, 286.0))
+  , (Fl, (114, 290.0))
+  , (Mc, (115, 290.0))
+  , (Lv, (116, 293.0))
+  , (Ts, (117, 294.0))
+  , (Og, (118, 294.0))
+  ]
+
+elementShellMap :: M.Map AtomicSymbol Orb.Shells
+elementShellMap = M.fromList
+  [ (O, Orb.oxygen)
+  , (H, Orb.hydrogen)
+  , (N, Orb.nitrogen)
+  , (C, Orb.carbon)
+  , (B, Orb.boron)
+  , (Fe, Orb.iron)
+  , (F, Orb.fluorine)
+  , (Cl, Orb.chlorine)
+  , (S, Orb.sulfur)
+  , (Br, Orb.bromine)
+  , (P, Orb.phosphorus)
+  , (Si, Orb.silicon)
+  , (I, Orb.iodine)
+  , (Na, Orb.sodium)
+  ]

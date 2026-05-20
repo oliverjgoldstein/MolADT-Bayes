@@ -52,6 +52,7 @@ library:
     - Orbital
     - SlaterTypeOrbital
     - Benchmarking.GaussianProcess
+    - Chem.BondingPerception
     - Chem.IO.SDF
     - Chem.IO.MoleculeJSON
     - Chem.IO.SMILES

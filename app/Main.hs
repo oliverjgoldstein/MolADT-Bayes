@@ -9,6 +9,7 @@ import           Benchmarking.BenchmarkModel
   )
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
+import           Chem.Dietz
 import           Chem.IO.MoleculeViewer
   ( moleculeViewerURI
   , openMoleculeViewer
@@ -44,6 +45,7 @@ import           Benchmarking.FreeSolvWLBondingGP
 import qualified Data.Char as Char
 import           Data.List (isPrefixOf, isSuffixOf)
 import           Data.Maybe (isJust)
+import qualified Data.Set as S
 import           System.Environment (getArgs, lookupEnv)
 import           System.FilePath (takeBaseName, (</>))
 import           Text.Megaparsec (errorBundlePretty)
@@ -58,6 +60,7 @@ main = do
     [] -> runDemo processedDataDir
     ["demo"] -> runDemo processedDataDir
     ["parse", path] -> runParse path
+    ["perceive-sdf", path] -> runPerceiveSDF path
     ["parse-smiles", smilesText] -> runParseSMILES smilesText
     ["parse-sdf-timing", path] -> runParseSdfTiming path Nothing
     ["parse-sdf-timing", path, limitText] -> runParseSdfTiming path (readMaybe limitText)
@@ -87,6 +90,7 @@ usage = unlines
   [ "Usage:"
   , "  stack run moladtbayes -- demo"
   , "  stack run moladtbayes -- parse molecules/benzene.sdf"
+  , "  stack run moladtbayes -- perceive-sdf molecules/benzene.sdf"
   , "  stack run moladtbayes -- parse-smiles \"c1ccccc1\""
   , "  stack run moladtbayes -- parse-sdf-timing path/to/file.sdf_or_sdf_directory"
   , "  stack run moladtbayes -- parse-sdf-timing path/to/file.sdf_or_sdf_directory 1000"
@@ -157,6 +161,43 @@ runParse path = do
     Right molecule -> do
       renderValidated molecule
       printSmiles "SMILES" molecule
+
+runPerceiveSDF :: FilePath -> IO ()
+runPerceiveSDF path = do
+  parsed <- readSDF path
+  case parsed of
+    Left err -> putStrLn (errorBundlePretty err)
+    Right molecule ->
+      case validateMolecule molecule of
+        Left err -> putStrLn err
+        Right valid -> do
+          putStrLn "Inferred bonding systems:"
+          mapM_ printInferredSystem (systems valid)
+
+printInferredSystem :: (SystemId, BondingSystem) -> IO ()
+printInferredSystem (SystemId systemId, bondingSystem)
+  | isParserInferred bondingSystem =
+      putStrLn $
+        "#"
+          ++ show systemId
+          ++ "\t"
+          ++ maybe "" id (tag bondingSystem)
+          ++ "\t"
+          ++ show (getNN (sharedElectrons bondingSystem))
+          ++ "e\t"
+          ++ unwords (map edgeText (S.toAscList (memberEdges bondingSystem)))
+  | otherwise = pure ()
+
+isParserInferred :: BondingSystem -> Bool
+isParserInferred bondingSystem =
+  case tag bondingSystem of
+    Just "pi_ring" -> True
+    Just value -> "inferred_" `isPrefixOf` value
+    Nothing -> False
+
+edgeText :: Edge -> String
+edgeText (Edge (AtomId left) (AtomId right)) =
+  show left ++ "-" ++ show right
 
 runParseSMILES :: String -> IO ()
 runParseSMILES smilesText =

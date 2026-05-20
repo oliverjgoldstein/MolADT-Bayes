@@ -47,7 +47,9 @@ the Python exported FreeSolv matrices. It replaces the older overfit
 ### Feature Map
 
 The latest paper-facing Python model is `moladt_full30_rbf_gp`, an exact GP over
-30 fixed features: 20 graph-only features plus 10 MolADT descriptor additions.
+30 fixed MolADT-native features: composition and polarity signals, explicit
+bonding-system counts, effective bond-order summaries, ring and rotatable-bond
+structure, and short-range radial descriptors.
 The full list is in [GP Features](docs/freesolv-gp-feature-list.md), with a
 plain-English companion in
 [Feature Translations](docs/freesolv-gp-feature-layman.md).
@@ -70,15 +72,17 @@ kernels and performs exact GP conditioning for predictions.
 ### Representation Ablation
 
 The main empirical comparison lives in the Python repo because it owns the
-FreeSolv paper artifacts. The latest 20-split A/B/C small-feature result is:
+FreeSolv paper artifacts. The latest committed 20-split A/B/C small-feature
+result before the multigraph feature redo was:
 
 | Label | Variant | Meaning | Test RMSE |
 | --- | --- | --- | ---: |
 | A | atom bag | 10 atom-count features | `1.971 +/- 0.567` |
 | B | SMILES adjacency graph | 20 graph-only features | `1.791 +/- 0.505` |
-| C | full MolADT | 30 features: graph baseline plus MolADT descriptors | `1.308 +/- 0.461` |
+| C | full MolADT | previous 20 graph features plus 10 MolADT descriptors | `1.308 +/- 0.461` |
 
-This replaces the older WL-token result as the number to foreground.
+Re-run the Python `make freesolv-ablation` target before citing an RMSE for the
+current multigraph-first C-row feature contract.
 
 ## Why MolADT
 
@@ -161,6 +165,8 @@ Shells and equality:
 
 - shells are optional on atoms
 - `elementAttributes` carries the default shell data used by simple constructors
+- `elementAttributes` covers all 118 official elements for atomic number and
+  mass; non-audited elements intentionally have no default shell object
 - use [`sameMolecule`](docs/molecule-equality.md) for equality modulo container
   ordering
 - `sameMolecule` ignores ordering of maps, system lists, member-edge sets, and

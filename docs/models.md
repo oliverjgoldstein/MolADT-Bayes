@@ -48,9 +48,9 @@ matrix.
 The latest paper-facing Python feature set is the fixed
 `moladt_full30_rbf_gp` list:
 
-- 10 atom-count features
-- 10 graph-summary features
-- 10 MolADT descriptor additions
+- composition and polarity signals
+- explicit bonding-system and effective-order summaries
+- ring, rotatable-bond, and short-range radial descriptors
 
 That fixed list is documented in
 [FreeSolv GP feature list](freesolv-gp-feature-list.md), with a plain-English
@@ -68,9 +68,10 @@ k(x, x') =
 Haskell samples the mean offset, signal variance, lengthscale, and observation
 noise, then uses exact GP conditioning for validation and test predictions.
 
-## Latest FreeSolv Result
+## Historical FreeSolv Result
 
-The latest FreeSolv paper result in the Python results tree is:
+The latest committed FreeSolv paper result before the multigraph feature redo
+is:
 
 ```text
 ../MolADT-Bayes-Python/results/freesolv_ablation/run_20260512_small_feature_ablation/
@@ -82,9 +83,9 @@ Its 20-split test metrics are:
 | --- | --- | --- | ---: |
 | A | atom bag | 10 atom-count features | `1.971 +/- 0.567` |
 | B | SMILES adjacency graph | 20 graph-only features | `1.791 +/- 0.505` |
-| C | full MolADT | 30 features: graph baseline plus MolADT descriptors | `1.308 +/- 0.461` |
+| C | full MolADT | previous 20 graph features plus 10 MolADT descriptors | `1.308 +/- 0.461` |
 
-The B-to-C comparison is the representation result: adding the MolADT
-descriptor block improves the same small RBF GP over the graph-only baseline.
+Re-run the Python `make freesolv-ablation` target before citing an RMSE for the
+current multigraph-first C-row feature contract.
 
 Next: [Inference](inference.md), [Python interop](python-interop.md).

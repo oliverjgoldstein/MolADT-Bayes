@@ -14,6 +14,7 @@ import qualified Data.Map.Strict as M
 import qualified Data.Scientific as Scientific
 import qualified Data.Set as S
 import qualified Data.Text as T
+import           Text.Read (readMaybe)
 
 import           Chem.Dietz
 import           Chem.Molecule
@@ -249,22 +250,7 @@ smilesBondStereoDirectionValue direction =
       BondDown -> "\\"
 
 atomicSymbolText :: AtomicSymbol -> T.Text
-atomicSymbolText atomSymbol =
-  case atomSymbol of
-    H -> "H"
-    C -> "C"
-    N -> "N"
-    O -> "O"
-    S -> "S"
-    P -> "P"
-    Si -> "Si"
-    F -> "F"
-    Cl -> "Cl"
-    Br -> "Br"
-    I -> "I"
-    Fe -> "Fe"
-    B -> "B"
-    Na -> "Na"
+atomicSymbolText = T.pack . show
 
 parseMoleculeValue :: A.Value -> Parser Molecule
 parseMoleculeValue = A.withObject "Molecule" $ \obj -> do
@@ -555,22 +541,9 @@ parseSmilesBondStereoDirectionValue = A.withText "SmilesBondStereoDirection" $ \
 
 parseAtomicSymbolText :: T.Text -> Parser AtomicSymbol
 parseAtomicSymbolText value =
-  case value of
-    "H" -> pure H
-    "C" -> pure C
-    "N" -> pure N
-    "O" -> pure O
-    "S" -> pure S
-    "P" -> pure P
-    "Si" -> pure Si
-    "F" -> pure F
-    "Cl" -> pure Cl
-    "Br" -> pure Br
-    "I" -> pure I
-    "Fe" -> pure Fe
-    "B" -> pure B
-    "Na" -> pure Na
-    _ -> fail ("Unknown atomic symbol: " ++ T.unpack value)
+  case readMaybe (T.unpack value) of
+    Just atomSymbol -> pure atomSymbol
+    Nothing -> fail ("Unknown atomic symbol: " ++ T.unpack value)
 
 parseSoValue :: A.Value -> Parser Orb.So
 parseSoValue = A.withText "s orbital type" $ \value ->

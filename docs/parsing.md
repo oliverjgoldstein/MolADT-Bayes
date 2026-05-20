@@ -8,6 +8,8 @@ The typed `Molecule` value is the internal object.
 
 ```bash
 stack run moladtbayes -- parse molecules/benzene.sdf
+stack run moladtbayes -- perceive-sdf molecules/benzene.sdf
+sh tools/audit-sdf-bonding-perception.sh molecules/benzene.sdf
 ```
 
 This reads one SDF record, validates it, and prints the structured MolADT
@@ -27,6 +29,16 @@ into one-edge bonding systems with 2, 4, 6, and 8 shared electrons, displayed as
 When a single edge connects charged `Na+` to a supported charged anion (`F`,
 `Cl`, `Br`, `I`, `O`, `N`, or `S`), the parser stores the edge as a 0e `ionic`
 bonding system and keeps formal charge on the atoms.
+
+Delocalised systems are inferred from structure-table evidence, not from an
+arbitrary SDF property convention. The parser calls the shared Haskell bonding
+perception rules in `Chem.BondingPerception`. Those rules currently cover
+aromatic six-rings, two-edge oxo resonance such as carboxylate and nitro
+groups, amide C(O)-N resonance, conjugated diene paths, borane B-H-B bridges
+from geometry, and Fe-cyclopentadienyl systems. FreeSolv SDF files can include
+fields such as `partial_bond_orders` and `atom_types`; the current Haskell
+parser does not expose those property blocks as authoritative delocalisation
+annotations.
 
 Programmatic version:
 

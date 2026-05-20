@@ -51,7 +51,16 @@ import qualified Orbital as Orb
 
 -- ===== Element + units =====
 
-data AtomicSymbol = H | C | N | O | S | P | Si | F | Cl | Br | I | Fe | B | Na
+data AtomicSymbol
+  = H | C | N | O | S | P | Si | F | Cl | Br | I | Fe | B | Na
+  | He | Li | Be | Ne | Mg | Al | Ar | K | Ca | Sc | Ti | V | Cr | Mn
+  | Co | Ni | Cu | Zn | Ga | Ge | As | Se | Kr | Rb | Sr | Y | Zr | Nb
+  | Mo | Tc | Ru | Rh | Pd | Ag | Cd | In | Sn | Sb | Te | Xe | Cs | Ba
+  | La | Ce | Pr | Nd | Pm | Sm | Eu | Gd | Tb | Dy | Ho | Er | Tm | Yb
+  | Lu | Hf | Ta | W | Re | Os | Ir | Pt | Au | Hg | Tl | Pb | Bi | Po
+  | At | Rn | Fr | Ra | Ac | Th | Pa | U | Np | Pu | Am | Cm | Bk | Cf
+  | Es | Fm | Md | No | Lr | Rf | Db | Sg | Bh | Hs | Mt | Ds | Rg | Cn
+  | Nh | Fl | Mc | Lv | Ts | Og
   deriving (Eq, Ord, Show, Read, Generic, NFData)
 
 data ElementAttributes = ElementAttributes

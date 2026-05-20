@@ -1230,6 +1230,7 @@ elementStyle atomSymbol =
     Si -> ("#9c7fbd", "#69528b", 1.11)
     Fe -> ("#d27845", "#944521", 1.32)
     Na -> ("#7b8de8", "#4d5ca8", 1.66)
+    _ -> ("#7b8794", "#485260", 0.82)
 
 systemColor :: Int -> BondingSystem -> String
 systemColor rawId bondingSystem =

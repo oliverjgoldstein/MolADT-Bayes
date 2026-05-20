@@ -12,6 +12,7 @@ import qualified Data.Char as Char
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
+import           Text.Read (readMaybe)
 
 import           Chem.Dietz
 import           Chem.Molecule
@@ -983,21 +984,7 @@ supportsImplicitHydrogens symbol =
     _  -> False
 
 atomicSymbolFromToken :: String -> Maybe AtomicSymbol
-atomicSymbolFromToken "Br" = Just Br
-atomicSymbolFromToken "Cl" = Just Cl
-atomicSymbolFromToken "Fe" = Just Fe
-atomicSymbolFromToken "Na" = Just Na
-atomicSymbolFromToken "Si" = Just Si
-atomicSymbolFromToken "B"  = Just B
-atomicSymbolFromToken "C"  = Just C
-atomicSymbolFromToken "F"  = Just F
-atomicSymbolFromToken "H"  = Just H
-atomicSymbolFromToken "I"  = Just I
-atomicSymbolFromToken "N"  = Just N
-atomicSymbolFromToken "O"  = Just O
-atomicSymbolFromToken "P"  = Just P
-atomicSymbolFromToken "S"  = Just S
-atomicSymbolFromToken _    = Nothing
+atomicSymbolFromToken = readMaybe
 
 aromaticSymbolFromChar :: Char -> Maybe AtomicSymbol
 aromaticSymbolFromChar 'b' = Just B

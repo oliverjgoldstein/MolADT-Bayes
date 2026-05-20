@@ -19,6 +19,7 @@ import Chem.IO.SMILES (moleculeToSMILES, parseSMILES)
 import Chem.Molecule
 import Chem.Dietz
 import Chem.Validate (validateMolecule)
+import Constants (allAtomicSymbols, elementAttributes)
 import ExampleMolecules.Diborane (diboranePretty)
 import ExampleMolecules.Benzene (benzenePretty)
 import ExampleMolecules.Ferrocene (ferrocenePretty)
@@ -33,6 +34,7 @@ import System.Environment (setEnv, unsetEnv)
 import System.FilePath ((</>))
 import System.IO (hClose, openTempFile)
 import Text.Megaparsec (errorBundlePretty)
+import Text.Printf (printf)
 import SampleMolecules (methane, sodiumChloride, water)
 
 v3000Water :: String
@@ -56,6 +58,25 @@ v3000Water = unlines
   , "M  END"
   , "$$$$"
   ]
+
+allElementsV2000 :: String
+allElementsV2000 =
+  unlines $
+    [ "all-elements"
+    , "MolADT"
+    , "generated"
+    , printf "%3d%3d  0  0  0  0  0  0  0  0  0  0 V2000" (length allAtomicSymbols) (0 :: Int)
+    ]
+      ++ [ printf "%10.4f%10.4f%10.4f %-3s 0  0  0  0  0  0  0  0  0  0  0  0"
+             (fromIntegral index :: Double)
+             (0.0 :: Double)
+             (0.0 :: Double)
+             (show atomSymbol)
+         | (index, atomSymbol) <- zip [1 :: Int ..] allAtomicSymbols
+         ]
+      ++ [ "M  END"
+         , "$$$$"
+         ]
 
 v3000Ammonium :: String
 v3000Ammonium = unlines
@@ -136,6 +157,51 @@ v2000ChargeCodeSodiumChloride = unlines
   , "$$$$"
   ]
 
+v2000Formate :: String
+v2000Formate = unlines
+  [ "formate"
+  , "MolADT"
+  , "generated"
+  , "  4  3  0  0  0  0            999 V2000"
+  , "    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    1.2300    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "   -1.2300    0.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.0000    1.0900    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "  1  2  2  0  0  0  0"
+  , "  1  3  1  0  0  0  0"
+  , "  1  4  1  0  0  0  0"
+  , "M  CHG  1   3  -1"
+  , "M  END"
+  , "$$$$"
+  ]
+
+v2000Diborane :: String
+v2000Diborane = unlines
+  [ "diborane"
+  , "MolADT"
+  , "generated"
+  , "  8  5  0  0  0  0            999 V2000"
+  , "   -0.8850    0.0000    0.0000 B   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.8850    0.0000    0.0000 B   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.0000    0.0000    0.9928 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.0000    0.0000   -0.9928 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "   -0.8850    1.1900    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "   -0.8850   -1.1900    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.8850    1.1900    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "    0.8850   -1.1900    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0"
+  , "  1  2  1  0  0  0  0"
+  , "  1  5  1  0  0  0  0"
+  , "  1  6  1  0  0  0  0"
+  , "  2  7  1  0  0  0  0"
+  , "  2  8  1  0  0  0  0"
+  , "M  END"
+  , "$$$$"
+  ]
+
+freeSolvAromaticSamplePath :: FilePath
+freeSolvAromaticSamplePath =
+  "../MolADT-Bayes-Python/data/raw/freesolv/sdffiles/mobley_1034539.sdf"
+
 -- | Run the Hspec suite defined in 'spec'.
 main :: IO ()
 main = hspec spec
@@ -167,6 +233,20 @@ spec = do
           countUnnamedEdgeSystems 2 mol `shouldBe` 12
           countTag (Just "pi_ring") mol `shouldBe` 1
 
+    it "detects FreeSolv aromatic pi rings from the SDF bond table" $ do
+      sampleExists <- doesFileExist freeSolvAromaticSamplePath
+      sampleExists `shouldBe` True
+      raw <- readFile freeSolvAromaticSamplePath
+      raw `shouldContain` "> <partial_bond_orders>"
+      raw `shouldContain` "> <atom_types>"
+      parsed <- readSDF freeSolvAromaticSamplePath
+      case parsed of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          length (systems mol) `shouldBe` 25
+          countUnnamedEdgeSystems 2 mol `shouldBe` 23
+          countTag (Just "pi_ring") mol `shouldBe` 2
+
     it "parses the core V3000 atom and bond blocks" $
       case parseSDF v3000Water of
         Left err -> expectationFailure (errorBundlePretty err)
@@ -180,6 +260,17 @@ spec = do
         Right mol ->
           fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
 
+    it "covers all official element symbols at the SDF parser boundary" $
+      case parseSDF allElementsV2000 of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          length allAtomicSymbols `shouldBe` 118
+          M.size (atoms mol) `shouldBe` 118
+          atomicNumber (elementAttributes Og) `shouldBe` 118
+          atomicWeight (elementAttributes Tc) `shouldBe` 97.0
+          atomicWeight (elementAttributes Zr) `shouldBe` 91.222
+          symbol (attributes (atoms mol M.! AtomId 118)) `shouldBe` Og
+
     it "reads V2000 atom charge codes into formal charges" $
       case parseSDF v2000ChargeCodeSodiumChloride of
         Left err -> expectationFailure (errorBundlePretty err)
@@ -187,6 +278,20 @@ spec = do
           fmap formalCharge (M.lookup (AtomId 1) (atoms mol)) `shouldBe` Just 1
           fmap formalCharge (M.lookup (AtomId 2) (atoms mol)) `shouldBe` Just (-1)
           countTag (Just "ionic") mol `shouldBe` 1
+
+    it "infers common resonance and borane bridge systems from SDF evidence" $ do
+      case parseSDF v2000Formate of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          countTag (Just "inferred_carboxylate_pi") mol `shouldBe` 1
+          countUnnamedEdgeSystems 2 mol `shouldBe` 3
+          countUnnamedEdgeSystems 4 mol `shouldBe` 0
+      case parseSDF v2000Diborane of
+        Left err -> expectationFailure (errorBundlePretty err)
+        Right mol -> do
+          S.size (moleculeEdges mol) `shouldBe` 8
+          countUnnamedEdgeSystems 2 mol `shouldBe` 4
+          countTagPrefix "inferred_borane_bridge_" mol `shouldBe` 2
 
     it "maps non-aromatic SDF bond type 4 to an eight-electron quadruple covalent system" $
       case parseSDF v3000Quadruple of
@@ -592,6 +697,15 @@ countTag expected mol =
     [ ()
     | (_, system) <- systems mol
     , tag system == expected
+    ]
+
+countTagPrefix :: String -> Molecule -> Int
+countTagPrefix prefix mol =
+  length
+    [ ()
+    | (_, system) <- systems mol
+    , Just value <- [tag system]
+    , take (length prefix) value == prefix
     ]
 
 countUnnamedEdgeSystems :: Int -> Molecule -> Int

@@ -12,6 +12,7 @@ stack run moladtbayes -- --help
 | --- | --- |
 | `demo` | Parse local examples and run a small FreeSolv smoke benchmark. |
 | `parse <sdf>` | Read one SDF record, validate it, print the MolADT report, then try SMILES. |
+| `perceive-sdf <sdf>` | Print parser-inferred delocalised or multicentre systems from one SDF record. |
 | `to-json <sdf>` | Convert validated SDF input to shared MolADT JSON. |
 | `from-json <json>` | Decode MolADT JSON and print the typed molecule. |
 | `view-html <sdf-or-json>` | Write a standalone HTML viewer for SDF or MolADT JSON. |
@@ -29,6 +30,8 @@ stack run moladtbayes -- --help
 ```bash
 stack run moladtbayes -- parse molecules/benzene.sdf
 stack run moladtbayes -- parse molecules/sodium_chloride.sdf
+stack run moladtbayes -- perceive-sdf molecules/benzene.sdf
+sh tools/audit-sdf-bonding-perception.sh molecules/benzene.sdf
 stack run moladtbayes -- to-json molecules/benzene.sdf > benzene.moladt.json
 stack run moladtbayes -- from-json benzene.moladt.json
 stack run moladtbayes -- view-html molecules/benzene.sdf --output results/viewer/benzene.viewer.html

@@ -20,6 +20,7 @@ import qualified Data.Set as S
 import           Text.Megaparsec
 import           Text.Read (readMaybe)
 
+import           Chem.BondingPerception
 import           Chem.Molecule
 import           Chem.Molecule.Coordinate (Coordinate(..), mkAngstrom)
 import           Chem.Dietz
@@ -312,25 +313,30 @@ applyCharges atoms charges =
 buildMolecule :: [Atom] -> [(Edge, Int)] -> Molecule
 buildMolecule atomList bonds =
   let atomMap = M.fromList [(atomID atom, atom) | atom <- atomList]
-      rings = detectSixRings bonds
-      aromaticRingEdges = S.unions rings
-      ringSystems =
-        [ (SystemId idx, mkBondingSystem (NonNegative 6) ring (Just "pi_ring"))
-        | (idx, ring) <- zip [1 ..] rings
+      perception = perceiveSDFBonding atomList bonds
+      inferredSystems =
+        [ ( SystemId idx
+          , mkBondingSystem
+              (NonNegative (inferredSharedElectrons inferred))
+              (inferredMemberEdges inferred)
+              (Just (inferredTag inferred))
+          )
+        | (idx, inferred) <- zip [1 ..] (perceivedSystems perception)
         ]
-      edgeOffset = length ringSystems
+      edgeOffset = length inferredSystems
       edgeSystems =
         [ (SystemId idx, mkBondingSystem (NonNegative electrons) (S.singleton edge) label)
         | (idx, (edge, order)) <- zip [edgeOffset + 1 ..] bonds
-        , let (electrons, label) = bondElectronSystem atomMap edge order (edge `S.member` aromaticRingEdges)
+        , edge `S.notMember` suppressedEdges perception
+        , let (electrons, label) = bondElectronSystem atomMap edge order (edge `S.member` sigmaOverrideEdges perception)
         ]
-      sysList = ringSystems ++ edgeSystems
+      sysList = inferredSystems ++ edgeSystems
   in Molecule atomMap sysList emptySmilesStereochemistry
 
 bondElectronSystem :: M.Map AtomId Atom -> Edge -> Int -> Bool -> (Int, Maybe String)
-bondElectronSystem atomMap edge order inAromaticRing
+bondElectronSystem atomMap edge order forceSigma
   | order == 1 && isIonicEdge atomMap edge = (0, Just "ionic")
-  | inAromaticRing && order `elem` [1, 2, 4] = (2, Nothing)
+  | forceSigma && order `elem` [1, 2, 4] = (2, Nothing)
   | order == 1 = (2, Nothing)
   | order == 2 = (4, Nothing)
   | order == 3 = (6, Nothing)
@@ -395,62 +401,3 @@ foldl' f z xs = go z xs
   where
     go acc []     = acc
     go acc (y:ys) = let acc' = f acc y in acc' `seq` go acc' ys
-
--- | Detect 6-membered cycles with either alternating single/double bonds or
--- aromatic V3000 bond type 4 edges. The detection is intentionally lightweight
--- and only covers the local aromatic cases used by the demos and parser tests.
-detectSixRings :: [(Edge, Int)] -> [S.Set Edge]
-detectSixRings bonds = S.toList . S.fromList $ concatMap (findFrom adj) (M.keys adj)
-  where
-    -- adjacency map with bond orders
-    adj = M.unionWith (++) m1 m2
-    m1 = M.fromListWith (++) [ (i, [(j,o)]) | (Edge i j, o) <- bonds ]
-    m2 = M.fromListWith (++) [ (j, [(i,o)]) | (Edge i j, o) <- bonds ]
-
-    findFrom :: M.Map AtomId [(AtomId, Int)] -> AtomId -> [S.Set Edge]
-    findFrom a start = searchAlternating [start] start Nothing ++ searchAromatic [start] start
-      where
-        neighbors v = M.findWithDefault [] v a
-        alt 1 = 2
-        alt 2 = 1
-        alt _ = 0
-
-        searchAlternating path curr mPrev
-          | length path == 6 =
-              case mPrev of
-                Just prevOrd ->
-                  case lookup start (neighbors curr) of
-                    Just o | o == alt prevOrd ->
-                      let atoms = path ++ [start]
-                          edges = zipWith mkEdge atoms (tail atoms)
-                      in if start == minimum path
-                            then [S.fromList edges]
-                            else []
-                    _ -> []
-                Nothing -> []
-          | otherwise =
-              [ res
-              | (n,o) <- neighbors curr
-              , o `elem` [1,2]
-              , maybe True (\p -> o == alt p) mPrev
-              , n `notElem` path
-              , res <- searchAlternating (path ++ [n]) n (Just o)
-              ]
-
-        searchAromatic path curr
-          | length path == 6 =
-              case lookup start (neighbors curr) of
-                Just 4 ->
-                  let atoms = path ++ [start]
-                      edges = zipWith mkEdge atoms (tail atoms)
-                  in if start == minimum path
-                        then [S.fromList edges]
-                        else []
-                _ -> []
-          | otherwise =
-              [ res
-              | (n,o) <- neighbors curr
-              , o == 4
-              , n `notElem` path
-              , res <- searchAromatic (path ++ [n]) n
-              ]

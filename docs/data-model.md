@@ -61,7 +61,7 @@ data Coordinate = Coordinate
 ## Atoms
 
 ```haskell
-data AtomicSymbol = H | C | N | O | S | P | Si | F | Cl | Br | I | Fe | B | Na
+data AtomicSymbol = H | ... | Og
 
 data ElementAttributes = ElementAttributes
   { symbol       :: AtomicSymbol
@@ -84,8 +84,11 @@ formal charge. That is why downstream code can ask about the molecule directly
 instead of reparsing a notation string.
 
 `Shells` is optional (`Maybe Orb.Shells`). `elementAttributes` contains the
-default shell data for each element, so display code can read element data and
-default shells from one place.
+atomic number and mass value for all 118 official elements, using CIAAW 2024
+standard atomic weights where they exist and NIST SP 966 June 2024
+longest-lived-isotope mass numbers otherwise. Detailed default shell objects
+remain attached only for the audited element subset; other elements use
+`Nothing`.
 
 ## Bonding Systems
 
