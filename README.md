@@ -42,7 +42,8 @@ the Python exported FreeSolv matrices. It replaces the older overfit
   energy in kcal/mol
 
 `make haskell-infer-benchmark` runs that 30-feature exported-matrix benchmark.
-`make haskell-freesolv-20split` still exists for legacy WL-token diagnostics.
+`make haskell-freesolv-20split` remains available as the additional
+orbital-aware WL + bonding-system GP.
 
 ### Feature Map
 
@@ -167,6 +168,8 @@ Shells and equality:
 - `elementAttributes` carries the default shell data used by simple constructors
 - `elementAttributes` covers all 118 official elements for atomic number and
   mass; non-audited elements intentionally have no default shell object
+- audited default shell tables are regression-tested against neutral atomic
+  electron counts and representative orbital occupancy signatures
 - use [`sameMolecule`](docs/molecule-equality.md) for equality modulo container
   ordering
 - `sameMolecule` ignores ordering of maps, system lists, member-edge sets, and
@@ -336,8 +339,8 @@ The Haskell benchmark path is intentionally narrow:
 - it consumes the Python `freesolv_moladt_featurized` export
 - the default path is `infer-benchmark freesolv_moladt_featurized mh:0.2`
 - the exported-matrix GP screens to 30 features by default
-- `make haskell-freesolv-20split` remains a legacy WL-token diagnostic
-- `make haskell-freesolv-feature-list` writes a legacy WL token vocabulary doc
+- `make haskell-freesolv-20split` runs the additional WL-token GP
+- `make haskell-freesolv-feature-list` writes the WL token vocabulary doc
 - the Python repo owns the A/B/C representation ablation and paper artifacts
 
 ## Scope

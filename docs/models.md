@@ -26,8 +26,9 @@ Direct form:
 stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-The older `freesolv-wl-system-gp` command remains available for legacy
-WL-token diagnostics, but it is no longer the default FreeSolv result to cite.
+The `freesolv-wl-system-gp` command remains available as an additional
+orbital-aware WL + bonding-system GP, but it is no longer the default FreeSolv
+result to cite.
 
 ## What The Features Are
 

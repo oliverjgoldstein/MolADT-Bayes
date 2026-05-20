@@ -24,9 +24,10 @@ import ExampleMolecules.Diborane (diboranePretty)
 import ExampleMolecules.Benzene (benzenePretty)
 import ExampleMolecules.Ferrocene (ferrocenePretty)
 import ExampleMolecules.Morphine (morphinePretty, morphineRingClosureSmiles)
+import qualified Orbital as Orb
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy.Char8 as BL8
-import Data.List (isInfixOf)
+import Data.List (intercalate, isInfixOf)
 import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 import System.Directory (doesFileExist, getTemporaryDirectory, removeDirectoryRecursive, removeFile)
@@ -624,6 +625,29 @@ spec = do
       removeDirectoryRecursive path
       opened `shouldBe` False
 
+  describe "Orbital defaults" $ do
+    it "match the neutral atomic electron counts for every audited shell table" $ do
+      let audited =
+            [ (atomSymbol, attrs)
+            | atomSymbol <- allAtomicSymbols
+            , let attrs = elementAttributes atomSymbol
+            , defaultShells attrs /= Nothing
+            ]
+      audited `shouldSatisfy` (not . null)
+      mapM_
+        (\(atomSymbol, attrs) ->
+            shellElectronCount (defaultShells attrs)
+              `shouldBe` atomicNumber attrs
+          )
+        audited
+
+    it "keeps explicit orbital occupancy signatures for representative atoms" $ do
+      shellSignature (defaultShells (elementAttributes C)) `shouldContain` "2p110"
+      shellSignature (defaultShells (elementAttributes Fe)) `shouldContain` "3d21111"
+      shellSignature (defaultShells (elementAttributes Cl)) `shouldContain` "3p221"
+      shellSignature (defaultShells (elementAttributes Br)) `shouldContain` "4p221"
+      shellSignature (defaultShells (elementAttributes I)) `shouldContain` "5p221"
+
   describe "Built-in Dietz examples" $ do
     it "validates the explicit morphine example and preserves phenyl plus double covalent systems" $ do
       case validateMolecule morphinePretty of
@@ -717,3 +741,38 @@ countUnnamedEdgeSystems electrons mol =
     , S.size (memberEdges system) == 1
     , getNN (sharedElectrons system) == electrons
     ]
+
+shellElectronCount :: Shells -> Int
+shellElectronCount Nothing = 0
+shellElectronCount (Just shellList) = sum (map shellElectrons shellList)
+
+shellElectrons :: Orb.Shell -> Int
+shellElectrons shell =
+  sum
+    [ maybe 0 subShellElectrons (Orb.sSubShell shell)
+    , maybe 0 subShellElectrons (Orb.pSubShell shell)
+    , maybe 0 subShellElectrons (Orb.dSubShell shell)
+    , maybe 0 subShellElectrons (Orb.fSubShell shell)
+    ]
+
+subShellElectrons :: Orb.SubShell subshell -> Int
+subShellElectrons = sum . map Orb.electronCount . Orb.orbitals
+
+shellSignature :: Shells -> String
+shellSignature Nothing = ""
+shellSignature (Just shellList) = intercalate "." (concatMap shellParts shellList)
+
+shellParts :: Orb.Shell -> [String]
+shellParts shell =
+  concat
+    [ maybe [] (subShellPart "s") (Orb.sSubShell shell)
+    , maybe [] (subShellPart "p") (Orb.pSubShell shell)
+    , maybe [] (subShellPart "d") (Orb.dSubShell shell)
+    , maybe [] (subShellPart "f") (Orb.fSubShell shell)
+    ]
+  where
+    subShellPart label subshell =
+      [ show (Orb.principalQuantumNumber shell)
+          ++ label
+          ++ concatMap (show . Orb.electronCount) (Orb.orbitals subshell)
+      ]

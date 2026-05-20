@@ -67,12 +67,12 @@ MOLADT_PROCESSED_DATA_DIR=/path/to/data/processed \
   stack run moladtbayes -- infer-benchmark freesolv_moladt_featurized mh:0.2
 ```
 
-`make haskell-freesolv-20split` still runs the legacy WL-token GP over the
-committed `data/freesolv_wl_system_20_splits.json` file for diagnostics.
+`make haskell-freesolv-20split` runs the additional WL-token GP over the
+committed `data/freesolv_wl_system_20_splits.json` file.
 
 `make haskell-freesolv-feature-list` regenerates
 `docs/freesolv-wl-token-feature-list.md`, the sparse token names used by the
-legacy GP. The current 30-feature paper list lives in
+WL GP. The current 30-feature paper list lives in
 `docs/freesolv-gp-feature-list.md`.
 
 ## Common Fixes

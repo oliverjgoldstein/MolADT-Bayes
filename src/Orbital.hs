@@ -132,6 +132,11 @@ carbon =
                                     , orientation      = Just (angCoord 0 1 0)
                                     , hybridComponents = Nothing
                                     }
+                          , Orbital { orbitalType      = Pz
+                                    , electronCount    = 0
+                                    , orientation      = Just (angCoord 0 0 1)
+                                    , hybridComponents = Nothing
+                                    }
                           ])
       , dSubShell = Nothing
       , fSubShell = Nothing
@@ -263,6 +268,16 @@ boron =
                                     , orientation      = Just (angCoord 1 0 0)
                                     , hybridComponents = Nothing
                                     }
+                          , Orbital { orbitalType      = Py
+                                    , electronCount    = 0
+                                    , orientation      = Just (angCoord 0 1 0)
+                                    , hybridComponents = Nothing
+                                    }
+                          , Orbital { orbitalType      = Pz
+                                    , electronCount    = 0
+                                    , orientation      = Just (angCoord 0 0 1)
+                                    , hybridComponents = Nothing
+                                    }
                           ])
       , dSubShell = Nothing
       , fSubShell = Nothing
@@ -342,7 +357,7 @@ iron =
                           ])
       , dSubShell = Just (SubShell 
                           [ Orbital { orbitalType      = Dxy
-                                    , electronCount    = 1
+                                    , electronCount    = 2
                                     , orientation      = Just (angCoord (1/sqrt 2) (1/sqrt 2) 0)
                                     , hybridComponents = Nothing
                                     }
@@ -510,7 +525,7 @@ chlorine =
                                     , hybridComponents = Nothing
                                     }
                           , Orbital { orbitalType      = Pz
-                                    , electronCount    = 2
+                                    , electronCount    = 1
                                     , orientation      = Just (angCoord 0 0 1)
                                     , hybridComponents = Nothing
                                     }
@@ -759,13 +774,13 @@ bromine =
                                     , hybridComponents = Nothing
                                     }
                           , Orbital { orbitalType      = Py
-                                    , electronCount    = 1
+                                    , electronCount    = 2
                                     , orientation      = Just (angCoord 0 1 0)
                                     , hybridComponents = Nothing
                                     }
                           , Orbital { orbitalType      = Pz
-                                    , electronCount    = 0
-                                    , orientation      = Nothing
+                                    , electronCount    = 1
+                                    , orientation      = Just (angCoord 0 0 1)
                                     , hybridComponents = Nothing
                                     }
                           ])
@@ -917,7 +932,7 @@ silicon =
                                     }
                           , Orbital { orbitalType      = Pz
                                     , electronCount    = 0
-                                    , orientation      = Nothing
+                                    , orientation      = Just (angCoord 0 0 1)
                                     , hybridComponents = Nothing
                                     }
                           ])
@@ -1097,13 +1112,13 @@ iodine =
                                     , hybridComponents = Nothing
                                     }
                           , Orbital { orbitalType      = Py
-                                    , electronCount    = 1
+                                    , electronCount    = 2
                                     , orientation      = Just (angCoord 0 1 0)
                                     , hybridComponents = Nothing
                                     }
                           , Orbital { orbitalType      = Pz
-                                    , electronCount    = 0
-                                    , orientation      = Nothing
+                                    , electronCount    = 1
+                                    , orientation      = Just (angCoord 0 0 1)
                                     , hybridComponents = Nothing
                                     }
                           ])

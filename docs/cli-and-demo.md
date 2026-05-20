@@ -21,8 +21,8 @@ stack run moladtbayes -- --help
 | `to-smiles <sdf>` | Render validated classical MolADT structures to supported SMILES. |
 | `pretty-example <name>` | Print built-in `benzene`, `morphine`, `diborane`, `ferrocene`, or `sodium_chloride`; add `--viewer-output` to export HTML. |
 | `infer-benchmark <prefix> <method> [limit]` | Run the exported-feature FreeSolv benchmark consumer; this is the default 30-feature RBF GP path for `freesolv_moladt_featurized`. |
-| `freesolv-wl-system-gp [options]` | Run the legacy MolADT-only WL + bonding-system FreeSolv GP from parsed SDF molecules. |
-| `freesolv-wl-system-features [--output path]` | Write the legacy Haskell FreeSolv WL token-name documentation. |
+| `freesolv-wl-system-gp [options]` | Run the additional MolADT-only WL + bonding-system FreeSolv GP from parsed SDF molecules. |
+| `freesolv-wl-system-features [--output path]` | Write the Haskell FreeSolv WL token-name documentation. |
 | `inverse-design --target <value> --seed-molecule <name>` | Run the legacy exported-feature FreeSolv inverse-design search. |
 
 ## Useful Runs
